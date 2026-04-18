@@ -13,7 +13,7 @@ from lightning import Callback, LightningModule, Trainer
 from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.loggers import Logger
 from lightning.pytorch.loggers.wandb import WandbLogger
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig
 
 from topobench.data.preprocessor import PreProcessor
 from topobench.dataloader import TBDataloader
@@ -26,20 +26,7 @@ from topobench.utils import (
     log_hyperparameters,
     task_wrapper,
 )
-from topobench.utils.config_resolvers import (
-    define_task_level,
-    get_default_metrics,
-    get_default_trainer,
-    get_default_transform,
-    get_flattened_channels,
-    get_monitor_metric,
-    get_monitor_mode,
-    get_non_relational_out_channels,
-    get_required_lifting,
-    infer_in_channels,
-    infer_num_cell_dimensions,
-    infer_topotune_num_cell_dimensions,
-)
+from topobench.utils.config_resolvers import register_all_resolvers
 
 rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
 # ------------------------------------------------------------------------------------ #
@@ -60,51 +47,8 @@ rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
 # ------------------------------------------------------------------------------------ #
 
 
-OmegaConf.register_new_resolver(
-    "define_task_level", define_task_level, replace=True
-)
-OmegaConf.register_new_resolver(
-    "get_default_metrics", get_default_metrics, replace=True
-)
-OmegaConf.register_new_resolver(
-    "get_default_trainer", get_default_trainer, replace=True
-)
-OmegaConf.register_new_resolver(
-    "get_default_transform", get_default_transform, replace=True
-)
-OmegaConf.register_new_resolver(
-    "get_flattened_channels",
-    get_flattened_channels,
-    replace=True,
-)
-OmegaConf.register_new_resolver(
-    "get_required_lifting", get_required_lifting, replace=True
-)
-OmegaConf.register_new_resolver(
-    "get_monitor_metric", get_monitor_metric, replace=True
-)
-OmegaConf.register_new_resolver(
-    "get_monitor_mode", get_monitor_mode, replace=True
-)
-OmegaConf.register_new_resolver(
-    "get_non_relational_out_channels",
-    get_non_relational_out_channels,
-    replace=True,
-)
-OmegaConf.register_new_resolver(
-    "infer_in_channels", infer_in_channels, replace=True
-)
-OmegaConf.register_new_resolver(
-    "infer_num_cell_dimensions", infer_num_cell_dimensions, replace=True
-)
-OmegaConf.register_new_resolver(
-    "infer_topotune_num_cell_dimensions",
-    infer_topotune_num_cell_dimensions,
-    replace=True,
-)
-OmegaConf.register_new_resolver(
-    "parameter_multiplication", lambda x, y: int(int(x) * int(y)), replace=True
-)
+# Register custom resolvers before Hydra initialization
+register_all_resolvers()
 
 
 def initialize_hydra() -> DictConfig:

@@ -4,6 +4,60 @@ import os
 
 import omegaconf
 import torch
+from omegaconf import OmegaConf
+
+
+def register_all_resolvers():
+    """Register all custom OmegaConf resolvers.
+
+    This centralizes resolver registration to avoid duplication across modules. Should be called
+    before Hydra initialization in any script that uses configs.
+    """
+    OmegaConf.register_new_resolver(
+        "define_task_level", define_task_level, replace=True
+    )
+    OmegaConf.register_new_resolver(
+        "get_default_metrics", get_default_metrics, replace=True
+    )
+    OmegaConf.register_new_resolver(
+        "get_default_trainer", get_default_trainer, replace=True
+    )
+    OmegaConf.register_new_resolver(
+        "get_default_transform", get_default_transform, replace=True
+    )
+    OmegaConf.register_new_resolver(
+        "get_flattened_channels",
+        get_flattened_channels,
+        replace=True,
+    )
+    OmegaConf.register_new_resolver(
+        "get_required_lifting", get_required_lifting, replace=True
+    )
+    OmegaConf.register_new_resolver(
+        "get_monitor_metric", get_monitor_metric, replace=True
+    )
+    OmegaConf.register_new_resolver(
+        "get_monitor_mode", get_monitor_mode, replace=True
+    )
+    OmegaConf.register_new_resolver(
+        "get_non_relational_out_channels",
+        get_non_relational_out_channels,
+        replace=True,
+    )
+    OmegaConf.register_new_resolver(
+        "infer_in_channels", infer_in_channels, replace=True
+    )
+    OmegaConf.register_new_resolver(
+        "infer_num_cell_dimensions", infer_num_cell_dimensions, replace=True
+    )
+    OmegaConf.register_new_resolver(
+        "infer_topotune_num_cell_dimensions",
+        infer_topotune_num_cell_dimensions,
+        replace=True,
+    )
+    OmegaConf.register_new_resolver(
+        "parameter_multiplication", lambda x, y: int(int(x) * int(y)), replace=True
+    )
 
 
 def define_task_level(dataset_task_level, learning_setting):
