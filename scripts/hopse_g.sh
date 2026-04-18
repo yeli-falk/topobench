@@ -1,8 +1,8 @@
 #!/bin/bash
 # ==============================================================================
-# SCRIPT: hopse_m_baselines.sh
+# SCRIPT: hopse_g_baselines.sh
 # DESCRIPTION:
-#   Runs a scalable hyperparameter sweep for HOPSE_M models across both
+#   Runs a scalable hyperparameter sweep for HOPSE_G models across both
 #   simplicial and cellular domains.
 #   - ARCHITECTURE: Uses a "Cartesian Product" generation strategy.
 #   - CONCURRENCY: Uses "Virtual Slots" to run N jobs per GPU.
@@ -11,7 +11,7 @@
 # ==============================================================================
 # DO NOT MISS THIS
 
-export SELECTED_GPUS="0,1,2,3,4,5,6,7" 
+export SELECTED_GPUS="2,3,4,5,6,7" 
 wandb_entity="gbg141-hopse"
 RESUME=true  # Set to true to skip already-completed runs (reads SUCCESSFUL_RUNS.log)
 
@@ -19,10 +19,13 @@ RESUME=true  # Set to true to skip already-completed runs (reads SUCCESSFUL_RUNS
 # SECTION 1: LOGGING & ENVIRONMENT SETUP
 # ==============================================================================
 
+# Kill all background child processes if this script is interrupted or killed
+trap 'echo -e "\n🛑 Interrupted! Cleaning up all background jobs..."; kill 0 2>/dev/null; exit 1' SIGINT SIGTERM
+
 # 1.1 Define Project Identifiers
 script_name="$(basename "${BASH_SOURCE[0]}" .sh)"
 project_name="${script_name}"
-log_group="hopse_m_sweep"
+log_group="hopse_g_sweep"
 LOG_DIR="./logs/${log_group}"
 
 echo "=========================================================="
@@ -69,6 +72,10 @@ export MKL_NUM_THREADS=1
 export OPENBLAS_NUM_THREADS=1
 export VECLIB_MAXIMUM_THREADS=1
 export NUMEXPR_NUM_THREADS=1
+
+# --- W&B Anti-Hang Protections ---
+export WANDB_START_METHOD="thread"   # Prevents multiprocessing deadlocks on exit
+export WANDB__SERVICE_WAIT=300       # Forces daemon to timeout after 5 mins if stuck
 # ==============================================================================
 # SECTION 2: HARDWARE & CONCURRENCY (Auto-Detected)
 # ==============================================================================
@@ -76,6 +83,7 @@ export NUMEXPR_NUM_THREADS=1
 # 2.1 Auto-detect GPUs and determine jobs-per-GPU from VRAM.
 # Output format: "JOBS_PER_GPU gpu_id_0 gpu_id_1 ..."
 # Thresholds: >= 80 GB -> 4 jobs, <= 30 GB -> 2 jobs, between -> 3 jobs.
+
 _gpu_info=$(python3 -c "
 import subprocess
 import os
@@ -108,7 +116,7 @@ try:
         
     min_mem_gb = min(mem_mb) / 1024
     if min_mem_gb >= 80:
-        jobs = 5
+        jobs = 4
     elif min_mem_gb <= 10:
         jobs = 1
     elif min_mem_gb <= 30:
@@ -143,10 +151,17 @@ for i in "${!gpus[@]}"; do slot_pids[$i]=0; done
 # ==============================================================================
 
 # --- Models (both domains) ---
-# Use "alias::hydra_value" to disambiguate run names (both share basename "hopse_m").
+# Use "alias::hydra_value" to disambiguate run names (both share basename "hopse_g").
 models=(
-    "sim_hopse_m::simplicial/hopse_m"
-    "cell_hopse_m::cell/hopse_m"
+    "cell_hopse_g::cell/hopse_g"
+    "sim_hopse_g::simplicial/hopse_g"
+)
+gpse_models=(
+    "molpcba"
+    "zinc"
+    # "pcqm4mv2"
+    # "geom"
+    # "chembl"
 )
 
 # --- Datasets ---
@@ -156,12 +171,16 @@ datasets=(
     # "graph/PROTEINS"
     # "graph/NCI1"
     # "graph/NCI109"
-    # "graph/ZINC"
     # "graph/cocitation_citeseer"
     # "graph/cocitation_pubmed"
+    "graph/BBB_Martins"
+    "graph/Caco2_Wang"
+    "graph/Clearance_Hepatocyte_AZ"
+    "graph/CYP3A4_Veith"
     "simplicial/mantra_name"
     "simplicial/mantra_orientation"
     "simplicial/mantra_betti_numbers"
+    "graph/ZINC"
 )
 
 # --- Neighborhoods (8 configs from the original HOPSE study) ---
@@ -172,12 +191,6 @@ neighborhoods=(
     "adj3::[up_adjacency-0,up_adjacency-1,2-up_adjacency-0,down_adjacency-1,down_adjacency-2,2-down_adjacency-2]"
     "inc1::[up_incidence-0,2-up_incidence-0]"
     "inc2::[up_incidence-0,up_incidence-1,2-up_incidence-0,down_incidence-1,down_incidence-2,2-down_incidence-2]"
-)
-
-# --- Encodings (two families to compare) ---
-encodings=(
-    "pse::[LapPE,RWSE,ElectrostaticPE,HKdiagSE]"
-    "fe::[HKFE,KHopFE,PPRFE]"
 )
 
 # --- Hyperparameters (superset across all dataset groups) ---
@@ -213,7 +226,7 @@ SWEEP_CONFIG=(
     "|model|${models[*]}"
     "|dataset|${datasets[*]}"
     "N|model.preprocessing_params.neighborhoods|${neighborhoods[*]}"
-    "enc|model.preprocessing_params.encodings|${encodings[*]}"
+    "|transforms.hopse_encoding.pretrain_model|${gpse_models[*]}"
 
     # --- LEVEL 2: HYPERPARAMETERS ---
     "L|model.backbone.n_layers|${num_layers[*]}"
