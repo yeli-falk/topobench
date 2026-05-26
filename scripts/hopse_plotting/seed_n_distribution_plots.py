@@ -28,16 +28,15 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import pandas as pd  # noqa: E402
-
 from utils import (
     DEFAULT_WANDB_EXPORT_CSV,
     DEFAULT_WANDB_EXPORT_SHARD_DIR,
     PLOTS_DIR,
+    _union_column_order,
     aggregate_wandb_export_by_seed,
     build_seed_bucket_report,
     load_wandb_export_csv,
     safe_filename_token,
-    _union_column_order,
 )
 
 DEFAULT_SEED_N_DIST_DIR = PLOTS_DIR / "seed_n_distributions"
@@ -95,10 +94,14 @@ def seed_bucket_report_from_export_paths(
     out = out.reindex(columns=cols)
     silent_concat = pd.concat(silent_parts, ignore_index=True, sort=False)
     if silent_concat.empty:
-        silent = pd.DataFrame(columns=["model", "dataset", "n_silent_failures"])
+        silent = pd.DataFrame(
+            columns=["model", "dataset", "n_silent_failures"]
+        )
     else:
         silent = (
-            silent_concat.groupby(["model", "dataset"], dropna=False)["n_silent_failures"]
+            silent_concat.groupby(["model", "dataset"], dropna=False)[
+                "n_silent_failures"
+            ]
             .sum()
             .reset_index()
         )
@@ -152,11 +155,16 @@ def write_seed_distribution_plots(
 
         sf_model = pd.DataFrame()
         if silent_failures is not None and not silent_failures.empty:
-            sf_model = silent_failures[silent_failures["model"].astype(str) == str(model)]
+            sf_model = silent_failures[
+                silent_failures["model"].astype(str) == str(model)
+            ]
         any_silent_for_model = (
             not sf_model.empty
             and (
-                pd.to_numeric(sf_model["n_silent_failures"], errors="coerce").fillna(0) > 0
+                pd.to_numeric(
+                    sf_model["n_silent_failures"], errors="coerce"
+                ).fillna(0)
+                > 0
             ).any()
         )
 
@@ -184,11 +192,27 @@ def write_seed_distribution_plots(
                     & (sf["dataset"].astype(str) == ds)
                 ]
                 if not hit.empty:
-                    n_silent = int(pd.to_numeric(hit["n_silent_failures"], errors="coerce").fillna(0).sum())
+                    n_silent = int(
+                        pd.to_numeric(
+                            hit["n_silent_failures"], errors="coerce"
+                        )
+                        .fillna(0)
+                        .sum()
+                    )
 
             if piece.empty and n_silent <= 0:
-                ax.text(0.5, 0.5, "no data", ha="center", va="center", transform=ax.transAxes, fontsize=9)
-                ax.set_title(_dataset_short_title(ds), fontsize=9, fontweight="semibold")
+                ax.text(
+                    0.5,
+                    0.5,
+                    "no data",
+                    ha="center",
+                    va="center",
+                    transform=ax.transAxes,
+                    fontsize=9,
+                )
+                ax.set_title(
+                    _dataset_short_title(ds), fontsize=9, fontweight="semibold"
+                )
                 ax.set_axis_off()
                 continue
 
@@ -197,15 +221,21 @@ def write_seed_distribution_plots(
                 y = [float(n_silent)]
                 colors = ["#D35400"]
             else:
-                piece["n_seeds"] = pd.to_numeric(piece["n_seeds"], errors="coerce")
-                piece["n_groups"] = pd.to_numeric(piece["n_groups"], errors="coerce").fillna(0)
+                piece["n_seeds"] = pd.to_numeric(
+                    piece["n_seeds"], errors="coerce"
+                )
+                piece["n_groups"] = pd.to_numeric(
+                    piece["n_groups"], errors="coerce"
+                ).fillna(0)
                 piece = piece.dropna(subset=["n_seeds"])
 
                 x = piece["n_seeds"].astype(int).astype(str).tolist()
                 y = piece["n_groups"].astype(float).tolist()
                 colors = []
                 for ns in piece["n_seeds"].astype(int):
-                    if required_n_seeds is not None and int(ns) == int(required_n_seeds):
+                    if required_n_seeds is not None and int(ns) == int(
+                        required_n_seeds
+                    ):
                         colors.append("#E74C3C")
                     else:
                         colors.append("#4A90A4")
@@ -216,7 +246,9 @@ def write_seed_distribution_plots(
                     colors = colors + ["#D35400"]
 
             ax.bar(x, y, color=colors, edgecolor="0.2", linewidth=0.45)
-            ax.set_title(_dataset_short_title(ds), fontsize=9, fontweight="semibold")
+            ax.set_title(
+                _dataset_short_title(ds), fontsize=9, fontweight="semibold"
+            )
             ax.set_xlabel("n_seeds (runs / group)", fontsize=8)
             ax.set_ylabel("# groups", fontsize=8)
             ax.yaxis.grid(True, linestyle=":", linewidth=0.45, alpha=0.85)
@@ -239,14 +271,23 @@ def write_seed_distribution_plots(
                 "Terracotta bar (silent fail): raw runs dropped (no finite summary_test_best_rerun/*)."
             )
         if foot_lines:
-            fig.text(0.5, 0.01, " ".join(foot_lines), ha="center", fontsize=8, style="italic")
+            fig.text(
+                0.5,
+                0.01,
+                " ".join(foot_lines),
+                ha="center",
+                fontsize=8,
+                style="italic",
+            )
             fig.subplots_adjust(bottom=0.12, top=0.92)
         else:
             fig.subplots_adjust(bottom=0.08, top=0.92)
 
         stem = safe_filename_token(str(model).replace("/", "__"), max_len=96)
         out_path = out_dir / f"{stem}_n_seeds.png"
-        fig.savefig(out_path, bbox_inches="tight", facecolor="white", edgecolor="none")
+        fig.savefig(
+            out_path, bbox_inches="tight", facecolor="white", edgecolor="none"
+        )
         plt.close(fig)
         n_written += 1
 

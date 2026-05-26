@@ -5,7 +5,7 @@ project_name="SCCNN_$dataset"
 # =====================
 # DATA
 # =====================
-DATA_SEEDS=(0 3 5 7 9) 
+DATA_SEEDS=(0 3 5 7 9)
 
 # =====================
 # MODEL PARAMETERS
@@ -38,7 +38,7 @@ READOUT_NAMES_STR=$(IFS=,; echo "${READOUT_NAMES[*]}")  # Convert to comma-separ
 INDICENCE_SIGNED_STR=$(IFS=,; echo "${INDICENCE_SIGNED[*]}")  # Convert to comma-separated string
 
 
-        
+
 python topobench/run.py\
     dataset=simplicial/mantra_orientation \
     model=simplicial/sccnn_custom \
@@ -59,7 +59,7 @@ python topobench/run.py\
     optimizer.parameters.weight_decay=0.01\
     callbacks.early_stopping.patience=1\
     --multirun &
-wait 
+wait
 sleep 5
 
 #python topobench/run.py dataset=simplicial/mantra_orientation model=simplicial/sccnn_custom model.backbone.n_layers=4 model.feature_encoder.out_channels=128 model.feature_encoder.proj_dropout=0.25 dataset.split_params.data_seed=0 dataset.dataloader_params.batch_size=256 model.readout.readout_name=PropagateSignalDown trainer.max_epochs=50 trainer.min_epochs=1 trainer.devices=[0] trainer.check_val_every_n_epoch=5 logger.wandb.project=prerun optimizer.parameters.lr=0.001 optimizer.parameters.weight_decay=0.01 callbacks.early_stopping.patience=1
@@ -68,10 +68,10 @@ sleep 5
 # =====================
 
 gpus=(0 1 2 3 4 5 6 7)
-for i in {0..4}; do 
+for i in {0..4}; do
     CUDA=${gpus[$i]}  # Use the GPU number from our gpus array
     data_seed=${DATA_SEEDS[$i]} # Use the neighbourhood from our neighbourhoods array
-    
+
     for lr in ${LEARNING_RATES[*]}
     do
         for batch_size in ${BATCH_SIZES[*]}
@@ -100,4 +100,3 @@ for i in {0..4}; do
         done
     done
 done
-

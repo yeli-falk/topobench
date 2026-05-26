@@ -125,7 +125,7 @@ class TestCombinedFEs:
             "HKFE": {"kernel_param_HKFE": (1, 3), "concat_to_x": True},
             "KHopFE": {"max_hop": 3, "concat_to_x": True}
         }
-        
+
         # Test HKFE first, then KHopFE
         transform1 = CombinedFEs(encodings=["HKFE", "KHopFE"], parameters=params)
         data1 = Data(x=self.x.clone(), edge_index=self.edge_index, num_nodes=self.num_nodes)
@@ -250,7 +250,7 @@ class TestCombinedFEs:
             "KHopFE": {"max_hop": 4, "concat_to_x": True}
         }
         transform = CombinedFEs(encodings=["HKFE", "KHopFE"], parameters=params)
-        
+
         # Create a larger graph
         num_nodes = 50
         num_edges = 150
@@ -317,7 +317,7 @@ class TestCombinedFEs:
             "KHopFE": {"max_hop": 4, "concat_to_x": True}
         }
         transform = CombinedFEs(encodings=["HKFE", "KHopFE"], parameters=params)
-        
+
         edge_index = self.edge_index.cuda()
         x = self.x.cuda()
         data = Data(x=x, edge_index=edge_index, num_nodes=self.num_nodes)
@@ -335,7 +335,7 @@ class TestCombinedFEs:
             "KHopFE": {"max_hop": 4, "concat_to_x": True}
         }
         transform = CombinedFEs(encodings=["HKFE", "KHopFE"], parameters=params)
-        
+
         y = torch.tensor([0, 1, 0])
         custom_attr = torch.tensor([10, 20, 30])
         data = Data(
@@ -373,7 +373,7 @@ class TestCombinedFEs:
         assert hasattr(transformed1, "KHopFE")
         assert hasattr(transformed2, "HKFE")
         assert hasattr(transformed2, "KHopFE")
-        
+
         # Encodings should be deterministic
         assert torch.allclose(transformed1.HKFE, transformed2.HKFE)
         assert torch.allclose(transformed1.KHopFE, transformed2.KHopFE)
@@ -454,7 +454,7 @@ class TestCombinedFEs:
     ])
     def test_parametrized_single_encodings(self, encoding, params, expected_dim):
         """Parametrized test for single encodings.
-        
+
         Parameters
         ----------
         encoding : str
@@ -476,7 +476,7 @@ class TestCombinedFEs:
     @pytest.mark.parametrize("kernel_param", [(1, 3), (1, 5), (1, 9), (2, 10)])
     def test_parametrized_hkfe_dimensions(self, kernel_param):
         """Parametrized test for different HKFE kernel parameters.
-        
+
         Parameters
         ----------
         kernel_param : tuple
@@ -496,7 +496,7 @@ class TestCombinedFEs:
     @pytest.mark.parametrize("max_hop", [2, 3, 4, 5])
     def test_parametrized_khopfe_dimensions(self, max_hop):
         """Parametrized test for different KHopFE max_hop values.
-        
+
         Parameters
         ----------
         max_hop : int
@@ -567,7 +567,7 @@ class TestCombinedFEs:
                     edges.append([i, j])
         edge_index = torch.tensor(edges).t()
         x = torch.randn(4, 2)
-        
+
         params = {
             "HKFE": {"kernel_param_HKFE": (1, 5), "concat_to_x": True},
             "KHopFE": {"max_hop": 4, "concat_to_x": True}
@@ -1130,4 +1130,3 @@ class TestCombinedFEs:
         assert transformed.KHopFE.shape == (3, 3)
         assert transformed.SheafConnLapPE.shape == (3, 6)
         assert transformed.PPRFE.shape == (3, 5)
-

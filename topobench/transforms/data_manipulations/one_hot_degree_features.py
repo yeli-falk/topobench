@@ -14,9 +14,9 @@ class OneHotDegreeFeatures(torch_geometric.transforms.BaseTransform):
     ----------
     max_degree : int
         The maximum degree of the graph.
-    degrees_fields : str
+    degrees_field : str
         The field containing the node degrees.
-    features_fields : str
+    features_field : str
         The field containing the node features.
     cat : bool, optional
         If set to `True`, the one hot encodings are concatenated to the node

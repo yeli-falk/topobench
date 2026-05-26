@@ -28,7 +28,6 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
-
 from utils import (
     CSV_DIR,
     MODEL_PREPROC_ENCODINGS,
@@ -68,7 +67,9 @@ DOMAIN_BLOCKS: list[tuple[str, list[tuple[str, str]]]] = [
     ),
 ]
 
-ALL_MODEL_TAGS: list[str] = [tag for _, mlist in DOMAIN_BLOCKS for tag, _ in mlist]
+ALL_MODEL_TAGS: list[str] = [
+    tag for _, mlist in DOMAIN_BLOCKS for tag, _ in mlist
+]
 
 # Column order / headers aligned with leaderboard tables (no ↑/↓ — preprocessing time only).
 TABLE_COLUMN_SPECS: list[tuple[str, str]] = [
@@ -87,7 +88,9 @@ TABLE_COLUMN_SPECS: list[tuple[str, str]] = [
 ]
 
 # Unique hydra paths (for W&B name parsing); order follows first occurrence in ``TABLE_COLUMN_SPECS``.
-UNIQUE_SWEEP_DATASETS: list[str] = list(dict.fromkeys(h for h, _ in TABLE_COLUMN_SPECS))
+UNIQUE_SWEEP_DATASETS: list[str] = list(
+    dict.fromkeys(h for h, _ in TABLE_COLUMN_SPECS)
+)
 
 N_GRAPH_COLS = sum(1 for h, _ in TABLE_COLUMN_SPECS if h.startswith("graph/"))
 N_SIM_COLS = len(TABLE_COLUMN_SPECS) - N_GRAPH_COLS
@@ -141,10 +144,18 @@ def _model_tag_from_config(row: dict[str, Any]) -> str | None:
         return "sim_g"
     if model == "cell/hopse_m":
         enc = row.get(MODEL_PREPROC_ENCODINGS, "")
-        return "cell_m_fe" if hopse_m_encoding_f_vs_pe_sub_id(enc) == "f" else "cell_m_pe"
+        return (
+            "cell_m_fe"
+            if hopse_m_encoding_f_vs_pe_sub_id(enc) == "f"
+            else "cell_m_pe"
+        )
     if model == "simplicial/hopse_m":
         enc = row.get(MODEL_PREPROC_ENCODINGS, "")
-        return "sim_m_fe" if hopse_m_encoding_f_vs_pe_sub_id(enc) == "f" else "sim_m_pe"
+        return (
+            "sim_m_fe"
+            if hopse_m_encoding_f_vs_pe_sub_id(enc) == "f"
+            else "sim_m_pe"
+        )
     return None
 
 
@@ -213,13 +224,17 @@ def _to_float(cell: Any) -> float | None:
     return f
 
 
-def rows_to_long_dataframe(raw: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
+def rows_to_long_dataframe(
+    raw: pd.DataFrame,
+) -> tuple[pd.DataFrame, list[str]]:
     """Return long-form (model_tag, neighborhood, dataset, time_sec) and parse warnings."""
     warnings: list[str] = []
     records: list[dict[str, Any]] = []
 
     if SUMMARY_PREPROC not in raw.columns:
-        warnings.append(f"Column {SUMMARY_PREPROC!r} missing — nothing to aggregate.")
+        warnings.append(
+            f"Column {SUMMARY_PREPROC!r} missing — nothing to aggregate."
+        )
 
     for idx, row in raw.iterrows():
         run_name = str(row.get("identifiers_run_name") or "").strip()
@@ -229,15 +244,25 @@ def rows_to_long_dataframe(raw: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
         else:
             tag = _model_tag_from_config(row)
             dataset = str(row.get("dataset") or "").strip()
-            nb = _nb_alias_from_neighborhoods_cfg(row.get("model.preprocessing_params.neighborhoods"))
+            nb = _nb_alias_from_neighborhoods_cfg(
+                row.get("model.preprocessing_params.neighborhoods")
+            )
             if tag is None or not nb:
-                warnings.append(f"Row {idx}: could not parse model/neighborhood (run_name={run_name!r}).")
+                warnings.append(
+                    f"Row {idx}: could not parse model/neighborhood (run_name={run_name!r})."
+                )
                 continue
 
-        tcell = row.get(SUMMARY_PREPROC) if SUMMARY_PREPROC in raw.columns else None
+        tcell = (
+            row.get(SUMMARY_PREPROC)
+            if SUMMARY_PREPROC in raw.columns
+            else None
+        )
         tsec = _to_float(tcell)
         if tsec is None:
-            warnings.append(f"Row {idx} ({run_name}): missing or non-finite {SUMMARY_PREPROC}.")
+            warnings.append(
+                f"Row {idx} ({run_name}): missing or non-finite {SUMMARY_PREPROC}."
+            )
             continue
 
         records.append(
@@ -255,14 +280,18 @@ def rows_to_long_dataframe(raw: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
     if long_df.empty:
         return long_df, warnings
 
-    dup = long_df.duplicated(subset=["model_tag", "neighborhood", "dataset"], keep=False)
+    dup = long_df.duplicated(
+        subset=["model_tag", "neighborhood", "dataset"], keep=False
+    )
     if dup.any():
         n = int(dup.sum())
         warnings.append(
             f"Found {n} row(s) with duplicate (model, neighborhood, dataset); keeping max time (one row each)."
         )
         long_df = long_df.sort_values("preprocessor_time_sec", ascending=False)
-        long_df = long_df.drop_duplicates(subset=["model_tag", "neighborhood", "dataset"], keep="first")
+        long_df = long_df.drop_duplicates(
+            subset=["model_tag", "neighborhood", "dataset"], keep="first"
+        )
 
     return long_df, warnings
 
@@ -294,9 +323,13 @@ def build_latex_table(
                     v = pivot.get((mk, nk), {}).get(hydra_ds)
                     if v is not None and math.isfinite(v):
                         vals.append(float(v))
-            col_mins_by_domain[(domain_name, ci)] = min(vals) if vals else float("nan")
+            col_mins_by_domain[(domain_name, ci)] = (
+                min(vals) if vals else float("nan")
+            )
 
-    def cell_tex(model_tag: str, nb_key: str, col_idx: int, domain_name: str) -> str:
+    def cell_tex(
+        model_tag: str, nb_key: str, col_idx: int, domain_name: str
+    ) -> str:
         hydra_ds, _ = TABLE_COLUMN_SPECS[col_idx]
         v = pivot.get((model_tag, nb_key), {}).get(hydra_ds)
         if v is None or not math.isfinite(v):
@@ -312,7 +345,9 @@ def build_latex_table(
     c_sim_end = c0 + n_ds - 1
 
     lines: list[str] = []
-    lines.append("% --- Requires: \\usepackage{booktabs,multirow,adjustbox,graphicx,xcolor,colortbl}")
+    lines.append(
+        "% --- Requires: \\usepackage{booktabs,multirow,adjustbox,graphicx,xcolor,colortbl}"
+    )
     lines.append("\\definecolor{bestgray}{HTML}{D9D9D9}")
     lines.append("\\begin{table}[t]")
     lines.append(f"\\caption{{{caption}}}")
@@ -376,7 +411,11 @@ def main() -> None:
         description="W&B preprocessing ablation: export preprocessor_time + LaTeX table."
     )
     p.add_argument("--entity", default=DEFAULT_WANDB_ENTITY, help="W&B entity")
-    p.add_argument("--project", default=DEFAULT_WANDB_PROJECT, help="W&B project (single project)")
+    p.add_argument(
+        "--project",
+        default=DEFAULT_WANDB_PROJECT,
+        help="W&B project (single project)",
+    )
     p.add_argument(
         "--run-state",
         default="finished",
@@ -403,7 +442,9 @@ def main() -> None:
         default=None,
         help="Optional directory prefix: writes ``<dir>/<output-tex.name>`` when set.",
     )
-    p.add_argument("--decimals", type=int, default=2, help="Decimal places (default: 2)")
+    p.add_argument(
+        "--decimals", type=int, default=2, help="Decimal places (default: 2)"
+    )
     p.add_argument(
         "--label",
         default="tbl:preprocess_ablation_preproc_time",
@@ -445,9 +486,7 @@ def main() -> None:
     if args.tables_dir is not None:
         tex_path = Path(args.tables_dir) / args.output_tex.name
 
-    cap = (
-        "Preprocessing time in seconds. \\textbf{Bold}: fastest per dataset and domain (cell or simplicial)."
-    )
+    cap = "Preprocessing time in seconds. \\textbf{Bold}: fastest per dataset and domain (cell or simplicial)."
     body = build_latex_table(
         pivot,
         decimals=int(args.decimals),
@@ -461,7 +500,9 @@ def main() -> None:
     expected = len(ALL_MODEL_TAGS) * len(NB_ORDER) * len(UNIQUE_SWEEP_DATASETS)
     got = len(long_df)
     if got < expected:
-        print(f"Note: {got} / {expected} expected rows in full grid (missing runs or parse failures).")
+        print(
+            f"Note: {got} / {expected} expected rows in full grid (missing runs or parse failures)."
+        )
 
 
 if __name__ == "__main__":

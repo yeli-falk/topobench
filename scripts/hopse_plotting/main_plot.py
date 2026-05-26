@@ -51,7 +51,6 @@ import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
 from matplotlib.patches import Patch  # noqa: E402
-
 from utils import (
     DEFAULT_AGGREGATED_EXPORT_CSV,
     DEFAULT_COLLAPSED_EXPORT_CSV,
@@ -63,6 +62,7 @@ from utils import (
     publication_label_hopse_from_hydra_model_path,
     safe_metric_col_token,
 )
+
 
 def _label_short(s: str, max_len: int = 28) -> str:
     t = str(s).strip()
@@ -307,7 +307,9 @@ def plot_collapsed_model_leaderboard(
     if monitor_column not in df.columns:
         raise KeyError(f"missing {monitor_column!r} in collapsed dataframe")
     if "model" not in df.columns or "dataset" not in df.columns:
-        raise KeyError("collapsed dataframe must contain 'model' and 'dataset' columns")
+        raise KeyError(
+            "collapsed dataframe must contain 'model' and 'dataset' columns"
+        )
 
     models_all = models_sorted_for_display(df["model"].astype(str).unique())
     color_by_model = {m: color_for_model(m) for m in models_all}
@@ -322,7 +324,12 @@ def plot_collapsed_model_leaderboard(
     plt.rcParams.update(
         {
             "font.family": "serif",
-            "font.serif": ["Times New Roman", "DejaVu Serif", "Times", "serif"],
+            "font.serif": [
+                "Times New Roman",
+                "DejaVu Serif",
+                "Times",
+                "serif",
+            ],
             "axes.labelsize": 10,
             "axes.titlesize": 11,
             "xtick.labelsize": 9,
@@ -338,7 +345,9 @@ def plot_collapsed_model_leaderboard(
     )
 
     # Wide enough for a single-row model legend when there are many models
-    fig_w = min(22.0, max(6.0, n_cols_fig * 3.05, 5.0 + 0.44 * len(models_all)))
+    fig_w = min(
+        22.0, max(6.0, n_cols_fig * 3.05, 5.0 + 0.44 * len(models_all))
+    )
     fig_h = max(2.95, n_rows * 3.22)
     fig, axes = plt.subplots(
         n_rows,
@@ -361,12 +370,21 @@ def plot_collapsed_model_leaderboard(
             mean_c, std_c = _mean_std_columns_for_row(monitor, split)
 
             if mean_c not in sub.columns:
-                ax.text(0.5, 0.5, f"missing column\n{mean_c}", ha="center", va="center", transform=ax.transAxes)
+                ax.text(
+                    0.5,
+                    0.5,
+                    f"missing column\n{mean_c}",
+                    ha="center",
+                    va="center",
+                    transform=ax.transAxes,
+                )
                 ax.set_title(_dataset_title(ds))
                 panel_idx += 1
                 continue
 
-            models_here = models_sorted_for_display(sub["model"].astype(str).unique())
+            models_here = models_sorted_for_display(
+                sub["model"].astype(str).unique()
+            )
             x = np.arange(len(models_here))
             means: list[float] = []
             stds: list[float] = []
@@ -374,7 +392,11 @@ def plot_collapsed_model_leaderboard(
             for m in models_here:
                 row_m = sub[sub["model"].astype(str) == m].iloc[0]
                 mu = pd.to_numeric(row_m.get(mean_c, np.nan), errors="coerce")
-                sg = pd.to_numeric(row_m.get(std_c, np.nan), errors="coerce") if std_c in sub.columns else np.nan
+                sg = (
+                    pd.to_numeric(row_m.get(std_c, np.nan), errors="coerce")
+                    if std_c in sub.columns
+                    else np.nan
+                )
                 means.append(float(mu) if pd.notna(mu) else np.nan)
                 stds.append(float(sg) if pd.notna(sg) else 0.0)
                 colors.append(color_by_model.get(m, (0.4, 0.4, 0.4)))
@@ -390,17 +412,29 @@ def plot_collapsed_model_leaderboard(
                 edgecolor="0.12",
                 linewidth=0.55,
                 capsize=2.2,
-                error_kw={"elinewidth": 0.85, "capthick": 0.85, "color": "0.22"},
+                error_kw={
+                    "elinewidth": 0.85,
+                    "capthick": 0.85,
+                    "color": "0.22",
+                },
             )
             ax.set_xticks([])
             ax.set_xticklabels([])
-            ax.tick_params(axis="x", which="both", bottom=False, top=False, labelbottom=False)
+            ax.tick_params(
+                axis="x",
+                which="both",
+                bottom=False,
+                top=False,
+                labelbottom=False,
+            )
             if n_b > 0:
                 ax.set_xlim(-0.5, (n_b - 1) + 0.5)
             ax.set_title(_dataset_title(ds), fontweight="semibold", pad=6)
             ds_l = str(ds).lower()
             ylab_monitor = (
-                "val/f1" if ("mantra_betti" in ds_l and "#f1-" in ds_l) else monitor
+                "val/f1"
+                if ("mantra_betti" in ds_l and "#f1-" in ds_l)
+                else monitor
             )
             ax.set_ylabel(metric_axis_label(ylab_monitor))
             _set_ylim_from_values_with_errors(ax, means, stds)
@@ -455,7 +489,9 @@ def plot_collapsed_model_leaderboard(
 
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(path, dpi=dpi, bbox_inches="tight", facecolor="white", edgecolor="none")
+    fig.savefig(
+        path, dpi=dpi, bbox_inches="tight", facecolor="white", edgecolor="none"
+    )
     plt.close(fig)
 
 
@@ -524,14 +560,19 @@ def main() -> None:
         args.output,
         group_cols=list(args.group_by),
     )
-    print(f"Wrote {len(collapsed)} rows x {len(collapsed.columns)} columns -> {args.output}")
+    print(
+        f"Wrote {len(collapsed)} rows x {len(collapsed.columns)} columns -> {args.output}"
+    )
 
     if args.no_plot:
         return
 
     plot_path = args.plot_output
     if plot_path is None:
-        plot_path = DEFAULT_LEADERBOARD_PLOT_DIR / f"{args.output.stem}_leaderboard.png"
+        plot_path = (
+            DEFAULT_LEADERBOARD_PLOT_DIR
+            / f"{args.output.stem}_leaderboard.png"
+        )
 
     plot_collapsed_model_leaderboard(
         collapsed,

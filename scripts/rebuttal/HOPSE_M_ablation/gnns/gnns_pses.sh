@@ -1,7 +1,7 @@
 # =====================
 # DATA
 # =====================
-DATA_SEEDS=(0 3 5 7 9) 
+DATA_SEEDS=(0 3 5 7 9)
 
 # =====================
 # MODEL PARAMETERS
@@ -53,7 +53,7 @@ do
         do
         project_name="fix_gnn_rebuttal_cell_${dataset}"
             # =====================
-            for i in {0..1}; do 
+            for i in {0..1}; do
                 neighborhood=${neighborhoods[$i]} # Use the neighbourhood from our neighbourhoods array
 
                 python topobench/run.py\
@@ -82,7 +82,7 @@ do
             done
             wait
 
-            for i in {0..1}; do 
+            for i in {0..1}; do
                 neighborhood=${neighborhoods[$i]} # Use the neighbourhood from our neighbourhoods array
 
                 for batch_size in ${batch_sizes[*]}

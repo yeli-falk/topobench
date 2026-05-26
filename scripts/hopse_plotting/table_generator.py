@@ -49,7 +49,6 @@ from pathlib import Path
 from typing import Any, Literal
 
 import pandas as pd
-
 from main_loader import DATASETS as LOADER_DATASETS
 from utils import (
     DEFAULT_AGGREGATED_EXPORT_CSV,
@@ -67,8 +66,8 @@ from utils import (
     hydra_dataset_key_from_loader_identity,
     is_mantra_betti_hydra_dataset,
     iter_best_val_group_picks,
-    optimization_mode_for_metric_tail,
     load_wandb_export_csv,
+    optimization_mode_for_metric_tail,
     safe_filename_token,
 )
 
@@ -115,7 +114,16 @@ Z_CRIT_95 = 1.959963984540054
 
 # W&B often stores 0–1 fractions; publication tables use 0–100 for these tails.
 _DISPLAY_SCALE_100: frozenset[str] = frozenset(
-    {"accuracy", "f1", "f1-1", "f1-2", "precision", "recall", "auroc", "roc_auc"}
+    {
+        "accuracy",
+        "f1",
+        "f1-1",
+        "f1-2",
+        "precision",
+        "recall",
+        "auroc",
+        "roc_auc",
+    }
 )
 
 
@@ -157,7 +165,9 @@ def _z_two_sample(mu_i: float, se_i: float, mu_j: float, se_j: float) -> float:
     return abs(mu_i - mu_j) / math.sqrt(v)
 
 
-def _not_sig_diff_from_best(mu: float, se: float, best_mu: float, best_se: float) -> bool:
+def _not_sig_diff_from_best(
+    mu: float, se: float, best_mu: float, best_se: float
+) -> bool:
     return _z_two_sample(mu, se, best_mu, best_se) <= Z_CRIT_95
 
 
@@ -211,9 +221,13 @@ def _latex_short_dataset_label(path: str) -> str:
             "f1-2": r"$\beta_2$",
             "f1-0": r"$\beta_0$",
         }.get(suf, suf.replace("_", r"\_"))
-        base_l = _DATASET_COLUMN_LABEL.get(base, base.rsplit("/", 1)[-1].replace("_", r"\_"))
+        base_l = _DATASET_COLUMN_LABEL.get(
+            base, base.rsplit("/", 1)[-1].replace("_", r"\_")
+        )
         return f"{base_l} {beta_lbl}"
-    return _DATASET_COLUMN_LABEL.get(path, path.rsplit("/", 1)[-1].replace("_", r"\_"))
+    return _DATASET_COLUMN_LABEL.get(
+        path, path.rsplit("/", 1)[-1].replace("_", r"\_")
+    )
 
 
 def _auto_header_for_dataset_path(path: str) -> str:
@@ -223,13 +237,25 @@ def _auto_header_for_dataset_path(path: str) -> str:
     return f"{short} ({arr})"
 
 
-def expand_mantra_betti_specs(specs: list[tuple[str, str]]) -> list[tuple[str, str]]:
+def expand_mantra_betti_specs(
+    specs: list[tuple[str, str]],
+) -> list[tuple[str, str]]:
     """One column per ``β₁`` / ``β₂`` (test F1); ``β₀`` omitted; selection still uses val loss."""
     out: list[tuple[str, str]] = []
     for p, h in specs:
         if is_mantra_betti_hydra_dataset(p) and "#" not in p:
-            out.append((f"{MANTRA_BETTI_HYDRA_DATASET}#f1-1", r"$\beta_1$ ($\uparrow$)"))
-            out.append((f"{MANTRA_BETTI_HYDRA_DATASET}#f1-2", r"$\beta_2$ ($\uparrow$)"))
+            out.append(
+                (
+                    f"{MANTRA_BETTI_HYDRA_DATASET}#f1-1",
+                    r"$\beta_1$ ($\uparrow$)",
+                )
+            )
+            out.append(
+                (
+                    f"{MANTRA_BETTI_HYDRA_DATASET}#f1-2",
+                    r"$\beta_2$ ($\uparrow$)",
+                )
+            )
         else:
             out.append((p, h))
     return out
@@ -345,13 +371,23 @@ def _latex_graph_sub_row_label(base_short: str, sub_id: str) -> str:
     return f"{base_short}-\\texttt{{{body}}}"
 
 
-def graph_submodel_table_rows(stats: dict[tuple[str, str], Any]) -> list[tuple[str, str]]:
+def graph_submodel_table_rows(
+    stats: dict[tuple[str, str], Any],
+) -> list[tuple[str, str]]:
     """(stats_row_key, LaTeX label) for GCN/GAT/GIN sub-rows."""
     seen_keys = {k[0] for k in stats}
-    templates = [("graph/gcn", "GCN"), ("graph/gat", "GAT"), ("graph/gin", "GIN")]
+    templates = [
+        ("graph/gcn", "GCN"),
+        ("graph/gat", "GAT"),
+        ("graph/gin", "GIN"),
+    ]
     rows: list[tuple[str, str]] = []
     for mid, lab in templates:
-        subs = {rk.split("|", 1)[-1] for rk in seen_keys if rk.startswith(mid + "|")}
+        subs = {
+            rk.split("|", 1)[-1]
+            for rk in seen_keys
+            if rk.startswith(mid + "|")
+        }
         if not subs:
             subs = {"base"}
         for sub in _sort_graph_sub_ids(subs):
@@ -395,7 +431,9 @@ def collect_winner_test_by_model_dataset(
     ``main_plot --group-by`` / ``collapse_aggregated_wandb_by_best_val``).
     """
     if "model" not in group_cols or "dataset" not in group_cols:
-        raise ValueError("collect_winner_test_by_model_dataset: group_cols must include 'model' and 'dataset'")
+        raise ValueError(
+            "collect_winner_test_by_model_dataset: group_cols must include 'model' and 'dataset'"
+        )
     colset = set(df.columns)
     out: dict[tuple[str, str], dict[str, Any]] = {}
     for keys, pick_idx, monitor_val, tail in iter_best_val_group_picks(
@@ -414,10 +452,24 @@ def collect_winner_test_by_model_dataset(
 
         if is_mantra_betti_hydra_dataset(dataset_raw):
             for fi_tail in MANTRA_BETTI_F1_TAILS:
-                test_src = _first_existing_column(_test_mean_columns_for_tail(fi_tail), colset)
-                te_std = _paired_std_from_mean(test_src, colset) if test_src else None
-                mu = pd.to_numeric(w.get(test_src), errors="coerce") if test_src else float("nan")
-                sd = pd.to_numeric(w.get(te_std), errors="coerce") if te_std else float("nan")
+                test_src = _first_existing_column(
+                    _test_mean_columns_for_tail(fi_tail), colset
+                )
+                te_std = (
+                    _paired_std_from_mean(test_src, colset)
+                    if test_src
+                    else None
+                )
+                mu = (
+                    pd.to_numeric(w.get(test_src), errors="coerce")
+                    if test_src
+                    else float("nan")
+                )
+                sd = (
+                    pd.to_numeric(w.get(te_std), errors="coerce")
+                    if te_std
+                    else float("nan")
+                )
                 col_key = f"{MANTRA_BETTI_HYDRA_DATASET}#{fi_tail}"
                 out[(model, col_key)] = {
                     "test_mean": float(mu) if pd.notna(mu) else float("nan"),
@@ -429,11 +481,23 @@ def collect_winner_test_by_model_dataset(
                 }
             continue
 
-        mode: Literal["max", "min"] = optimization_mode_for_metric_tail(tail) if tail else "max"
-        test_src = _first_existing_column(_test_mean_columns_for_tail(tail), colset)
+        mode: Literal["max", "min"] = (
+            optimization_mode_for_metric_tail(tail) if tail else "max"
+        )
+        test_src = _first_existing_column(
+            _test_mean_columns_for_tail(tail), colset
+        )
         te_std = _paired_std_from_mean(test_src, colset) if test_src else None
-        mu = pd.to_numeric(w.get(test_src), errors="coerce") if test_src else float("nan")
-        sd = pd.to_numeric(w.get(te_std), errors="coerce") if te_std else float("nan")
+        mu = (
+            pd.to_numeric(w.get(test_src), errors="coerce")
+            if test_src
+            else float("nan")
+        )
+        sd = (
+            pd.to_numeric(w.get(te_std), errors="coerce")
+            if te_std
+            else float("nan")
+        )
         out[(model, dataset)] = {
             "test_mean": float(mu) if pd.notna(mu) else float("nan"),
             "test_std": float(sd) if pd.notna(sd) else float("nan"),
@@ -445,7 +509,9 @@ def collect_winner_test_by_model_dataset(
     return out
 
 
-def collect_winner_test_by_submodel(df: pd.DataFrame) -> dict[tuple[str, str], dict[str, Any]]:
+def collect_winner_test_by_submodel(
+    df: pd.DataFrame,
+) -> dict[tuple[str, str], dict[str, Any]]:
     """
     Like ``collect_winner_test_by_model_dataset`` but groups by (model, dataset, _sub_id).
 
@@ -471,10 +537,24 @@ def collect_winner_test_by_submodel(df: pd.DataFrame) -> dict[tuple[str, str], d
 
         if is_mantra_betti_hydra_dataset(dataset_raw):
             for fi_tail in MANTRA_BETTI_F1_TAILS:
-                test_src = _first_existing_column(_test_mean_columns_for_tail(fi_tail), colset)
-                te_std = _paired_std_from_mean(test_src, colset) if test_src else None
-                mu = pd.to_numeric(w.get(test_src), errors="coerce") if test_src else float("nan")
-                sd = pd.to_numeric(w.get(te_std), errors="coerce") if te_std else float("nan")
+                test_src = _first_existing_column(
+                    _test_mean_columns_for_tail(fi_tail), colset
+                )
+                te_std = (
+                    _paired_std_from_mean(test_src, colset)
+                    if test_src
+                    else None
+                )
+                mu = (
+                    pd.to_numeric(w.get(test_src), errors="coerce")
+                    if test_src
+                    else float("nan")
+                )
+                sd = (
+                    pd.to_numeric(w.get(te_std), errors="coerce")
+                    if te_std
+                    else float("nan")
+                )
                 col_key = f"{MANTRA_BETTI_HYDRA_DATASET}#{fi_tail}"
                 vm = _val_mean_for_pick_row(w, fi_tail, colset)
                 out[(row_key, col_key)] = {
@@ -488,11 +568,23 @@ def collect_winner_test_by_submodel(df: pd.DataFrame) -> dict[tuple[str, str], d
                 }
             continue
 
-        mode: Literal["max", "min"] = optimization_mode_for_metric_tail(tail) if tail else "max"
-        test_src = _first_existing_column(_test_mean_columns_for_tail(tail), colset)
+        mode: Literal["max", "min"] = (
+            optimization_mode_for_metric_tail(tail) if tail else "max"
+        )
+        test_src = _first_existing_column(
+            _test_mean_columns_for_tail(tail), colset
+        )
         te_std = _paired_std_from_mean(test_src, colset) if test_src else None
-        mu = pd.to_numeric(w.get(test_src), errors="coerce") if test_src else float("nan")
-        sd = pd.to_numeric(w.get(te_std), errors="coerce") if te_std else float("nan")
+        mu = (
+            pd.to_numeric(w.get(test_src), errors="coerce")
+            if test_src
+            else float("nan")
+        )
+        sd = (
+            pd.to_numeric(w.get(te_std), errors="coerce")
+            if te_std
+            else float("nan")
+        )
         vm = _val_mean_for_pick_row(w, tail, colset)
         out[(row_key, dataset)] = {
             "test_mean": float(mu) if pd.notna(mu) else float("nan"),
@@ -539,9 +631,13 @@ def collapse_gnn_submodel_rows_to_base(
             ]
             if finite_val:
                 if mode == "min":
-                    _win_rk, win_st = min(finite_val, key=lambda x: float(x[1]["val_mean"]))
+                    _win_rk, win_st = min(
+                        finite_val, key=lambda x: float(x[1]["val_mean"])
+                    )
                 else:
-                    _win_rk, win_st = max(finite_val, key=lambda x: float(x[1]["val_mean"]))
+                    _win_rk, win_st = max(
+                        finite_val, key=lambda x: float(x[1]["val_mean"])
+                    )
             else:
                 ok_test = [
                     (rk, st)
@@ -557,7 +653,9 @@ def collapse_gnn_submodel_rows_to_base(
     return out
 
 
-def _fmt_cell(mu: float, sd: float, *, decimals: int = 2, scale: float = 1.0) -> str:
+def _fmt_cell(
+    mu: float, sd: float, *, decimals: int = 2, scale: float = 1.0
+) -> str:
     if not _finite(mu):
         return "-"
     mu *= scale
@@ -629,7 +727,11 @@ def build_latex_table(
         if not st or not _finite(st.get("test_mean", float("nan"))):
             return "-"
         mu = float(st["test_mean"])
-        sd = float(st["test_std"]) if _finite(st.get("test_std")) else float("nan")
+        sd = (
+            float(st["test_std"])
+            if _finite(st.get("test_std"))
+            else float("nan")
+        )
         se = _sem(sd, int(st.get("n_seeds", 0)))
         mode = st.get("mode", "max")
         tail = str(st.get("tail", ""))
@@ -642,7 +744,13 @@ def build_latex_table(
                 mus.append(float(t["test_mean"]))
         if not mus:
             return _latex_cell_body(
-                mu, sd, se, is_best=False, blue_tie=False, decimals=decimals, scale=dsc
+                mu,
+                sd,
+                se,
+                is_best=False,
+                blue_tie=False,
+                decimals=decimals,
+                scale=dsc,
             )
 
         best_val = max(mus) if mode == "max" else min(mus)
@@ -653,7 +761,9 @@ def build_latex_table(
             t = stats.get((rk, ds_key))
             if not t or not _finite(t.get("test_mean")):
                 continue
-            if abs(float(t["test_mean"]) - best_val) > 1e-9 * (1 + abs(best_val)):
+            if abs(float(t["test_mean"]) - best_val) > 1e-9 * (
+                1 + abs(best_val)
+            ):
                 continue
             ref_mu = float(t["test_mean"])
             ref_se = _sem(
@@ -664,11 +774,19 @@ def build_latex_table(
 
         blue = not is_best and _not_sig_diff_from_best(mu, se, ref_mu, ref_se)
         return _latex_cell_body(
-            mu, sd, se, is_best=is_best, blue_tie=blue, decimals=decimals, scale=dsc
+            mu,
+            sd,
+            se,
+            is_best=is_best,
+            blue_tie=blue,
+            decimals=decimals,
+            scale=dsc,
         )
 
     lines: list[str] = []
-    lines.append("% --- Requires: \\usepackage{booktabs,multirow,adjustbox,graphicx,xcolor,colortbl}")
+    lines.append(
+        "% --- Requires: \\usepackage{booktabs,multirow,adjustbox,graphicx,xcolor,colortbl}"
+    )
     lines.append(
         "\\definecolor{stdblue}{HTML}{C9DAF8}% same swatch as non-significant cells (tweak to match venue)"
     )
@@ -695,7 +813,9 @@ def build_latex_table(
         for title, i0, i1 in group_ranges:
             span = i1 - i0 + 1
             # \\mbox isolates parentheses from babel / chemistry packages that treat "(" specially.
-            multicols.append(f"\\multicolumn{{{span}}}{{c}}{{\\mbox{{{title}}}}}")
+            multicols.append(
+                f"\\multicolumn{{{span}}}{{c}}{{\\mbox{{{title}}}}}"
+            )
             cmid_parts.append(f"\\cmidrule(lr){{{3 + i0}-{3 + i1}}}")
         lines.append("  &  & " + " & ".join(multicols) + " \\\\")
         lines.append(" ".join(cmid_parts))
@@ -737,7 +857,9 @@ def build_latex_table(
 
 
 def main() -> None:
-    p = argparse.ArgumentParser(description="Emit LaTeX leaderboard table from seed-aggregated W&B CSV.")
+    p = argparse.ArgumentParser(
+        description="Emit LaTeX leaderboard table from seed-aggregated W&B CSV."
+    )
     p.add_argument(
         "-i",
         "--input",
@@ -777,7 +899,12 @@ def main() -> None:
             "then graph columns → simplicial."
         ),
     )
-    p.add_argument("--decimals", type=int, default=2, help="Decimal places for numbers (default: 2)")
+    p.add_argument(
+        "--decimals",
+        type=int,
+        default=2,
+        help="Decimal places for numbers (default: 2)",
+    )
     p.add_argument(
         "--no-scale-fractions",
         action="store_true",
@@ -793,7 +920,9 @@ def main() -> None:
     stats_sub = collect_winner_test_by_submodel(df)
 
     if args.datasets:
-        base_specs = expand_mantra_betti_specs(_parse_dataset_specs(args.datasets))
+        base_specs = expand_mantra_betti_specs(
+            _parse_dataset_specs(args.datasets)
+        )
     else:
         base_specs = expand_mantra_betti_specs(_specs_from_loader_paths())
 

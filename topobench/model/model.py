@@ -44,7 +44,7 @@ class TBModel(LightningModule):
     ) -> None:
         super().__init__()
 
-        # This line allows to access init params with 'self.hparams' attribute
+        # This line allows accessing init params with 'self.hparams' attribute
         # also ensures init params will be stored in ckpt
         self.save_hyperparameters(
             logger=False, ignore=["backbone", "readout", "feature_encoder"]
@@ -232,17 +232,17 @@ class TBModel(LightningModule):
         dict
             Dictionary containing the updated model output.
         """
-        # Get the correct mask
-        if self.state_str == "Training":
-            mask = batch.train_mask
-        elif self.state_str == "Validation":
-            mask = batch.val_mask
-        elif self.state_str == "Test":
-            mask = batch.test_mask
-        else:
-            raise ValueError("Invalid state_str")
-
         if self.task_level == "node":
+            # Get the correct mask
+            if self.state_str == "Training":
+                mask = batch.train_mask
+            elif self.state_str == "Validation":
+                mask = batch.val_mask
+            elif self.state_str == "Test":
+                mask = batch.test_mask
+            else:
+                raise ValueError("Invalid state_str")
+
             # Keep only train data points
             for key, val in model_out.items():
                 if key in ["logits", "labels"]:
@@ -387,14 +387,8 @@ class TBModelT(torch.nn.Module):
         The backbone wrapper class.
     readout : torch.nn.Module
         The readout class.
-    loss : torch.nn.Module
-        The loss class.
     feature_encoder : torch.nn.Module, optional
         The feature encoder (default: None).
-    evaluator : Any, optional
-        The evaluator class (default: None).
-    optimizer : Any, optional
-        The optimizer class (default: None).
     **kwargs : Any
         Additional keyword arguments.
     """

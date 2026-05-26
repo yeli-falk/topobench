@@ -17,27 +17,21 @@ class TestPipeline:
         """Setup method."""
         hydra.core.global_hydra.GlobalHydra.instance().clear()
 
-    @pytest.mark.parametrize("model", MODELS)
-    def test_pipeline(self, model, tmp_path, monkeypatch):
+    def test_pipeline(self):
         """Test pipeline."""
-        monkeypatch.setenv("PROJECT_ROOT", str(tmp_path))
-        with hydra.initialize(
-            version_base="1.3", config_path="../../configs", job_name="job"
-        ):
-            cfg = hydra.compose(
-                config_name="run.yaml",
-                overrides=[
-                    f"model={model}",
-                    f"dataset={DATASET}",
-                    "trainer.max_epochs=2",
-                    "trainer.min_epochs=1",
-                    "trainer.check_val_every_n_epoch=1",
-                    "paths=test",
-                    "callbacks=model_checkpoint",
-                    "trainer.accelerator=cpu",
-                    "trainer.devices=1",
-                ],
-                return_hydra_config=True,
-            )
-            run(cfg)
-        hydra.core.global_hydra.GlobalHydra.instance().clear()
+        with hydra.initialize(config_path="../../configs", job_name="job"):
+            for MODEL in MODELS:
+                cfg = hydra.compose(
+                    config_name="run.yaml",
+                    overrides=[
+                        f"model={MODEL}",
+                        f"dataset={DATASET}", # IF YOU IMPLEMENT A LARGE DATASET WITH AN OPTION TO USE A SLICE OF IT, ADD BELOW THE CORRESPONDING OPTION
+                        "trainer.max_epochs=2",
+                        "trainer.min_epochs=1",
+                        "trainer.check_val_every_n_epoch=1",
+                        "paths=test",
+                        "callbacks=model_checkpoint",
+                    ],
+                    return_hydra_config=True
+                )
+                run(cfg)

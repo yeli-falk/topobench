@@ -43,7 +43,6 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
-
 from utils import (
     DEFAULT_AGGREGATED_EXPORT_CSV,
     DEFAULT_HYPERPARAM_PLOT_DIR,
@@ -67,7 +66,12 @@ def _candidates_for_model_dataset_groups(df: pd.DataFrame) -> list[str]:
 
 
 def _stable_rng_seed(*parts: str) -> int:
-    h = zlib.adler32(b"\0".join(p.encode("utf-8", errors="replace") for p in parts)) & 0xFFFFFFFF
+    h = (
+        zlib.adler32(
+            b"\0".join(p.encode("utf-8", errors="replace") for p in parts)
+        )
+        & 0xFFFFFFFF
+    )
     return int(h % (2**31 - 1)) or 1
 
 
@@ -79,12 +83,7 @@ def _ylabel_validation_monitor(sub_all: pd.DataFrame) -> str:
     base = "Validation metric (seed-mean)\n(row monitor)"
     if MONITOR_METRIC_COLUMN not in sub_all.columns:
         return base
-    mon = (
-        sub_all[MONITOR_METRIC_COLUMN]
-        .dropna()
-        .astype(str)
-        .str.strip()
-    )
+    mon = sub_all[MONITOR_METRIC_COLUMN].dropna().astype(str).str.strip()
     mon = mon[(mon != "") & ~mon.str.lower().isin({"nan", "none"})]
     if mon.empty:
         return base
@@ -121,7 +120,14 @@ def _plot_one_hyperparam(
     y = y_num[mask_y]
 
     if len(y) == 0:
-        ax.text(0.5, 0.5, "no finite y", ha="center", va="center", transform=ax.transAxes)
+        ax.text(
+            0.5,
+            0.5,
+            "no finite y",
+            ha="center",
+            va="center",
+            transform=ax.transAxes,
+        )
         ax.set_axis_off()
         return
 
@@ -158,17 +164,28 @@ def _plot_one_hyperparam(
         return
 
     # Violin + jittered seed-mean points per category
-    sub = pd.DataFrame({"x": xv.astype(str), "y": pd.to_numeric(y, errors="coerce")})
+    sub = pd.DataFrame(
+        {"x": xv.astype(str), "y": pd.to_numeric(y, errors="coerce")}
+    )
     sub = sub[np.isfinite(sub["y"])]
     if sub.empty:
-        ax.text(0.5, 0.5, "no finite y", ha="center", va="center", transform=ax.transAxes)
+        ax.text(
+            0.5,
+            0.5,
+            "no finite y",
+            ha="center",
+            va="center",
+            transform=ax.transAxes,
+        )
         ax.set_axis_off()
         return
 
     medians = sub.groupby("x", dropna=False)["y"].median()
     order = medians.sort_values(ascending=False).index.tolist()
     xpos = np.arange(len(order), dtype=float)
-    data_arrays = [sub.loc[sub["x"] == cat, "y"].to_numpy(dtype=float) for cat in order]
+    data_arrays = [
+        sub.loc[sub["x"] == cat, "y"].to_numpy(dtype=float) for cat in order
+    ]
 
     # Violins (matplotlib KDE; single-point categories still get a narrow shape)
     parts = ax.violinplot(
@@ -208,7 +225,9 @@ def _plot_one_hyperparam(
         )
 
     ax.set_xticks(xpos)
-    ax.set_xticklabels([str(l) for l in order], rotation=42, ha="right", fontsize=7)
+    ax.set_xticklabels(
+        [str(l) for l in order], rotation=42, ha="right", fontsize=7
+    )
     ax.set_xlim(xpos.min() - 0.65, xpos.max() + 0.65)
     ax.set_xlabel(col_name, fontsize=8)
 
@@ -224,7 +243,9 @@ def run_hyperparam_analysis(
     if "model" not in df.columns:
         raise KeyError("expected column 'model' (seed-aggregated export)")
     if "dataset" not in df.columns:
-        raise KeyError("expected column 'dataset' for (model, dataset) grouping")
+        raise KeyError(
+            "expected column 'dataset' for (model, dataset) grouping"
+        )
 
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -232,7 +253,12 @@ def run_hyperparam_analysis(
     plt.rcParams.update(
         {
             "font.family": "serif",
-            "font.serif": ["Times New Roman", "DejaVu Serif", "Times", "serif"],
+            "font.serif": [
+                "Times New Roman",
+                "DejaVu Serif",
+                "Times",
+                "serif",
+            ],
             "axes.labelsize": 9,
             "axes.titlesize": 10,
             "figure.dpi": dpi,
@@ -262,7 +288,9 @@ def run_hyperparam_analysis(
             print(f"  (warn) --datasets not found in CSV: {sorted(missing_d)}")
 
     for m, d in combos:
-        sub_all = df[(df["model"].astype(str) == m) & (df["dataset"].astype(str) == d)]
+        sub_all = df[
+            (df["model"].astype(str) == m) & (df["dataset"].astype(str) == d)
+        ]
         varied = varied_hyperparam_columns(sub_all, candidate_cols=candidates)
         if not varied:
             print(f"  (skip) no varied hyperparam columns for ({m!r}, {d!r})")
@@ -278,9 +306,7 @@ def run_hyperparam_analysis(
 
         for col in varied:
             _kind_w, _xv_w = infer_hyperparam_plot_kind(sub_all[col])
-            if _kind_w == "scatter":
-                fig_w = 5.2
-            elif _kind_w == "skip":
+            if _kind_w == "scatter" or _kind_w == "skip":
                 fig_w = 5.2
             else:
                 n_lab = int(_xv_w.astype(str).nunique(dropna=False))
@@ -295,7 +321,12 @@ def run_hyperparam_analysis(
             ax.spines["right"].set_visible(False)
             fig.tight_layout()
             fn = f"{safe_filename_token(col, max_len=96)}.png"
-            fig.savefig(combo_dir / fn, bbox_inches="tight", facecolor="white", edgecolor="none")
+            fig.savefig(
+                combo_dir / fn,
+                bbox_inches="tight",
+                facecolor="white",
+                edgecolor="none",
+            )
             plt.close(fig)
 
         print(f"  Wrote {len(varied)} figure(s) -> {combo_dir}")
@@ -351,10 +382,16 @@ def main() -> None:
 
     inp = args.input
     if inp is None:
-        inp = DEFAULT_WANDB_EXPORT_CSV if args.from_raw else DEFAULT_AGGREGATED_EXPORT_CSV
+        inp = (
+            DEFAULT_WANDB_EXPORT_CSV
+            if args.from_raw
+            else DEFAULT_AGGREGATED_EXPORT_CSV
+        )
 
     df = _prepare_frame(inp, from_raw=args.from_raw)
-    print(f"Loaded {'raw→aggregated' if args.from_raw else 'seed-aggregated'} table: {len(df)} rows x {len(df.columns)} cols")
+    print(
+        f"Loaded {'raw→aggregated' if args.from_raw else 'seed-aggregated'} table: {len(df)} rows x {len(df.columns)} cols"
+    )
     run_hyperparam_analysis(
         df,
         args.output_dir,

@@ -55,7 +55,6 @@ import numpy as np
 import pandas as pd
 from matplotlib.patches import Patch
 from matplotlib.transforms import blended_transform_factory
-
 from table_generator import dataframe_with_submodel_id
 from utils import (
     CSV_DIR,
@@ -184,9 +183,12 @@ def _display_backbone(model_path: str, sub_id: str) -> str:
 
 def enrich_submodel_columns(df: pd.DataFrame) -> pd.DataFrame:
     out = dataframe_with_submodel_id(df)
-    out["model_row_key"] = out["model"].astype(str) + "|" + out["_sub_id"].astype(str)
+    out["model_row_key"] = (
+        out["model"].astype(str) + "|" + out["_sub_id"].astype(str)
+    )
     out["model_backbone"] = [
-        _display_backbone(str(m), str(s)) for m, s in zip(out["model"], out["_sub_id"], strict=True)
+        _display_backbone(str(m), str(s))
+        for m, s in zip(out["model"], out["_sub_id"], strict=True)
     ]
     return out
 
@@ -213,7 +215,9 @@ def add_timing_per_param_columns(df: pd.DataFrame) -> pd.DataFrame:
     t = df.copy()
     if PARAM_COUNT_COL not in t.columns:
         return t
-    params = pd.to_numeric(t[PARAM_COUNT_COL], errors="coerce").replace(0, float("nan"))
+    params = pd.to_numeric(t[PARAM_COUNT_COL], errors="coerce").replace(
+        0, float("nan")
+    )
     if "train_epoch_sec_mean" in t.columns:
         num = pd.to_numeric(t["train_epoch_sec_mean"], errors="coerce")
         t[TRAIN_EPOCH_SEC_PER_PARAM] = num / params
@@ -261,7 +265,12 @@ def _is_topotune_model(model: str) -> bool:
 
 def _is_hopse_model_path(model: str) -> bool:
     m = str(model).replace("\r", "").strip().lower()
-    return "/hopse_m" in m or m.endswith("hopse_m") or "/hopse_g" in m or m.endswith("hopse_g")
+    return (
+        "/hopse_m" in m
+        or m.endswith("hopse_m")
+        or "/hopse_g" in m
+        or m.endswith("hopse_g")
+    )
 
 
 def _hopse_color_index(model_row_key: str, model: str) -> int:
@@ -282,7 +291,9 @@ def _infer_plot_domain(df: pd.DataFrame) -> str:
     return dom if dom in ("cell", "simplicial") else "cell"
 
 
-def _model_order_bucket(df: pd.DataFrame, mk: str, domain: str) -> tuple[int, str]:
+def _model_order_bucket(
+    df: pd.DataFrame, mk: str, domain: str
+) -> tuple[int, str]:
     """
     Sort key for model row keys: hopse_g → HOPSE-M-F → HOPSE-M-C → (other hopse_m) → topotune →
     … then cell: cccn, cwn / simplicial: sann, sccnn. Unknown models last.
@@ -296,7 +307,11 @@ def _model_order_bucket(df: pd.DataFrame, mk: str, domain: str) -> tuple[int, st
 
     if "/hopse_g" in mlow or mlow.endswith("hopse_g"):
         return (0, str(mk))
-    is_hopse_m = "/hopse_m" in mlow or mlow.endswith("hopse_m") or bb.startswith("hopse_m")
+    is_hopse_m = (
+        "/hopse_m" in mlow
+        or mlow.endswith("hopse_m")
+        or bb.startswith("hopse_m")
+    )
     if is_hopse_m:
         if sub_id == "pe" or bb == "hopse_m_pe":
             return (2, str(mk))
@@ -318,7 +333,9 @@ def _model_order_bucket(df: pd.DataFrame, mk: str, domain: str) -> tuple[int, st
     return (999, str(mk))
 
 
-def _ordered_model_row_keys(df: pd.DataFrame, row_keys: list[str], domain: str) -> list[str]:
+def _ordered_model_row_keys(
+    df: pd.DataFrame, row_keys: list[str], domain: str
+) -> list[str]:
     return sorted(row_keys, key=lambda k: _model_order_bucket(df, k, domain))
 
 
@@ -339,17 +356,27 @@ def build_row_key_color_map(
             idx = _hopse_color_index(mk, model) % len(HOPSE_FACE_COLORS)
             color_of[mk] = mcolors.to_rgba(HOPSE_FACE_COLORS[idx])
         else:
-            color_of[mk] = mcolors.to_rgba(OTHER_FACE_COLORS[other_i % len(OTHER_FACE_COLORS)])
+            color_of[mk] = mcolors.to_rgba(
+                OTHER_FACE_COLORS[other_i % len(OTHER_FACE_COLORS)]
+            )
             other_i += 1
     return color_of
 
 
-def lift_edges_plus_rank2_by_dataset(lift_df: pd.DataFrame) -> tuple[pd.Series, pd.Series]:
+def lift_edges_plus_rank2_by_dataset(
+    lift_df: pd.DataFrame,
+) -> tuple[pd.Series, pd.Series]:
     """``(simplicial_series, cell_series)`` indexed by ``dataset_h``: edges + rank-2 train totals."""
     lift = lift_df.copy()
-    lift["dataset_h"] = lift["dataset"].map(lambda x: hydra_dataset_key_from_loader_identity(str(x)))
+    lift["dataset_h"] = lift["dataset"].map(
+        lambda x: hydra_dataset_key_from_loader_identity(str(x))
+    )
 
-    sim_mask = lift["lifting_domain"].astype(str).isin(("simplicial", "native_simplicial"))
+    sim_mask = (
+        lift["lifting_domain"]
+        .astype(str)
+        .isin(("simplicial", "native_simplicial"))
+    )
     cell_mask = lift["lifting_domain"].astype(str).eq("cell")
 
     def _series(sub: pd.DataFrame) -> pd.Series:
@@ -384,7 +411,9 @@ def dataset_sort_order_and_tick_labels(
     df: pd.DataFrame,
 ) -> tuple[list[str], list[str], list[str]]:
     """``(dataset_h keys, short names for ticks/titles, formatted topo-size numbers only)``."""
-    u = df.drop_duplicates(subset=["dataset_h"], keep="first")[["dataset_h", "complexity"]].copy()
+    u = df.drop_duplicates(subset=["dataset_h"], keep="first")[
+        ["dataset_h", "complexity"]
+    ].copy()
     u["complexity"] = pd.to_numeric(u["complexity"], errors="coerce")
     u = u.sort_values("complexity", kind="mergesort")
     dss: list[str] = []
@@ -394,7 +423,9 @@ def dataset_sort_order_and_tick_labels(
         ds = str(row["dataset_h"])
         cx = row["complexity"]
         dss.append(ds)
-        short = _GRAPH_TOPO_DISPLAY.get(ds, ds.split("/")[-1] if "/" in ds else ds)
+        short = _GRAPH_TOPO_DISPLAY.get(
+            ds, ds.split("/")[-1] if "/" in ds else ds
+        )
         short_names.append(short)
         topo_num_labels.append(_format_topo_size_tick(float(cx)))
     return dss, short_names, topo_num_labels
@@ -448,7 +479,9 @@ def _faceted_draw_one_panel(
     sub_ds = df.loc[df["dataset_h"].astype(str) == ds].copy()
     for mk in row_keys:
         vals = (
-            sub_ds.loc[sub_ds["model_row_key"].astype(str) == mk, y_col].dropna().to_numpy(dtype=float)
+            sub_ds.loc[sub_ds["model_row_key"].astype(str) == mk, y_col]
+            .dropna()
+            .to_numpy(dtype=float)
         )
         empties.append(vals.size == 0)
         if vals.size == 0:
@@ -489,7 +522,9 @@ def _faceted_draw_one_panel(
             if tick_label_for_mk is not None:
                 pretty.append(tick_label_for_mk(mk))
             else:
-                sub = label_src.loc[label_src["model_row_key"].astype(str) == mk]
+                sub = label_src.loc[
+                    label_src["model_row_key"].astype(str) == mk
+                ]
                 lab = str(sub["legend_label"].iloc[0]) if len(sub) else mk
                 pretty.append(lab)
         ax.set_xticklabels(pretty, fontsize=fs_tick, rotation=45, ha="right")
@@ -536,15 +571,21 @@ def prepare_plot_frame(
     cell models.
     """
     t = timing_df.copy()
-    t["dataset_h"] = t["dataset"].map(lambda x: hydra_dataset_key_from_loader_identity(str(x)))
+    t["dataset_h"] = t["dataset"].map(
+        lambda x: hydra_dataset_key_from_loader_identity(str(x))
+    )
     t["plot_domain"] = t["model"].map(_domain_from_model)
     t = t.loc[t["plot_domain"].eq(domain)].copy()
 
     if domain == "simplicial":
         if simplicial_dataset_kind not in ("graph", "mantra"):
-            raise ValueError('simplicial_dataset_kind must be "graph" or "mantra" for simplicial domain')
+            raise ValueError(
+                'simplicial_dataset_kind must be "graph" or "mantra" for simplicial domain'
+            )
         is_mantra = t["dataset_h"].map(_is_mantra_simplicial_dataset)
-        t = t.loc[is_mantra if simplicial_dataset_kind == "mantra" else ~is_mantra].copy()
+        t = t.loc[
+            is_mantra if simplicial_dataset_kind == "mantra" else ~is_mantra
+        ].copy()
 
     comp = sim_x if domain == "simplicial" else cell_x
     t["complexity"] = t["dataset_h"].map(comp)
@@ -555,7 +596,8 @@ def prepare_plot_frame(
     t = t.loc[t["complexity"].notna() & t[y_col].notna()].copy()
     t = t.loc[(pd.to_numeric(t["complexity"], errors="coerce") > 0)].copy()
     t["legend_label"] = [
-        _pretty_legend_label(str(a), str(b)) for a, b in zip(t["model_row_key"], t["model_backbone"], strict=True)
+        _pretty_legend_label(str(a), str(b))
+        for a, b in zip(t["model_row_key"], t["model_backbone"], strict=True)
     ]
     return t
 
@@ -581,14 +623,18 @@ def boxplot_grouped_by_dataset(
         return
 
     dom = _infer_plot_domain(df)
-    row_keys = _ordered_model_row_keys(df, sorted(df["model_row_key"].astype(str).unique()), dom)
+    row_keys = _ordered_model_row_keys(
+        df, sorted(df["model_row_key"].astype(str).unique()), dom
+    )
     color_of = build_row_key_color_map(df, row_keys, domain=dom)
     n_d, n_m = len(dss), len(row_keys)
     group_pitch = max(0.19 * n_m + 0.36, 0.88)
     centers = np.arange(n_d, dtype=float) * group_pitch
     bw = min(0.16, 0.72 / max(n_m, 1))
 
-    fig_w = max(7.5, min(FIG_W_MAX, FIG_W_PER_DS * n_d * group_pitch + FIG_W_PAD))
+    fig_w = max(
+        7.5, min(FIG_W_MAX, FIG_W_PER_DS * n_d * group_pitch + FIG_W_PAD)
+    )
     fig, ax = plt.subplots(figsize=(fig_w, FIG_H), layout="constrained")
 
     for j, mk in enumerate(row_keys):
@@ -596,10 +642,15 @@ def boxplot_grouped_by_dataset(
         data_k: list[np.ndarray] = []
         empties: list[bool] = []
         for ds in dss:
-            v = df.loc[
-                (df["dataset_h"].astype(str) == ds) & (df["model_row_key"].astype(str) == mk),
-                y_col,
-            ].dropna().to_numpy(dtype=float)
+            v = (
+                df.loc[
+                    (df["dataset_h"].astype(str) == ds)
+                    & (df["model_row_key"].astype(str) == mk),
+                    y_col,
+                ]
+                .dropna()
+                .to_numpy(dtype=float)
+            )
             empties.append(v.size == 0)
             if v.size == 0:
                 data_k.append(np.array([np.nan, np.nan, np.nan], dtype=float))
@@ -630,7 +681,9 @@ def boxplot_grouped_by_dataset(
     ax.tick_params(axis="y", labelsize=FS_TICK)
     ax.set_ylabel(y_label, fontsize=FS_XY)
     if show_topo_x:
-        ax.set_xlabel(x_axis_label, fontsize=FS_XY, labelpad=X_LABELPAD_GROUPED)
+        ax.set_xlabel(
+            x_axis_label, fontsize=FS_XY, labelpad=X_LABELPAD_GROUPED
+        )
     else:
         ax.set_xlabel("")
     ax.set_title(title, fontsize=FS_TITLE, pad=5, fontweight="bold")
@@ -653,7 +706,13 @@ def boxplot_grouped_by_dataset(
         lab = str(sub["legend_label"].iloc[0]) if len(sub) else mk
         legend_labels.append(lab)
         legend_handles.append(
-            Patch(facecolor=color_of[mk], edgecolor="0.25", linewidth=0.6, label=lab, alpha=0.82)
+            Patch(
+                facecolor=color_of[mk],
+                edgecolor="0.25",
+                linewidth=0.6,
+                label=lab,
+                alpha=0.82,
+            )
         )
     order = list(range(len(legend_labels)))
     ax.legend(
@@ -720,12 +779,17 @@ def _faceted_axes_at(axs, nrows: int, n_d: int, r: int, i: int):
     return axs[r, i]
 
 
-def _save_faceted_figure(fig, out_path: Path, *, dpi: int, pad_inches: float) -> None:
+def _save_faceted_figure(
+    fig, out_path: Path, *, dpi: int, pad_inches: float
+) -> None:
     out_path.parent.mkdir(parents=True, exist_ok=True)
     save_kw = {"dpi": dpi, "bbox_inches": "tight", "pad_inches": pad_inches}
     fig.savefig(out_path, **save_kw)
     print(f"  wrote {out_path}")
-    if out_path.suffix.lower() == ".png" and out_path.stem in FACETED_WALL_RUNTIME_PDF_STEMS:
+    if (
+        out_path.suffix.lower() == ".png"
+        and out_path.stem in FACETED_WALL_RUNTIME_PDF_STEMS
+    ):
         pdf_p = out_path.with_suffix(".pdf")
         fig.savefig(pdf_p, **save_kw)
         print(f"  wrote {pdf_p}")
@@ -752,7 +816,9 @@ def boxplot_faceted_by_dataset_columns(
         return
 
     dom = _infer_plot_domain(df)
-    row_keys = _ordered_model_row_keys(df, sorted(df["model_row_key"].astype(str).unique()), dom)
+    row_keys = _ordered_model_row_keys(
+        df, sorted(df["model_row_key"].astype(str).unique()), dom
+    )
     if not row_keys:
         print(f"  (skip empty) {out_path.name}")
         return
@@ -809,7 +875,9 @@ def boxplot_faceted_by_dataset_columns(
                 ha="center",
             )
 
-    fig.suptitle(title, fontsize=FACET_FS_TITLE, y=FACET_SUPTITLE_Y, fontweight="bold")
+    fig.suptitle(
+        title, fontsize=FACET_FS_TITLE, y=FACET_SUPTITLE_Y, fontweight="bold"
+    )
     if show_topo_x:
         fig.supxlabel(x_axis_label, fontsize=FACET_FS_XY, y=SUPXLABEL_Y)
 
@@ -860,7 +928,12 @@ def emit_topology_plots(
 
     for y_col, stem_y, y_lab in y_metrics:
         merged_cell = prepare_plot_frame(
-            plot_df, sim_x, cell_x, domain="cell", y_col=y_col, simplicial_dataset_kind=None
+            plot_df,
+            sim_x,
+            cell_x,
+            domain="cell",
+            y_col=y_col,
+            simplicial_dataset_kind=None,
         )
         boxplot_grouped_by_dataset(
             merged_cell,
@@ -877,7 +950,8 @@ def emit_topology_plots(
             title=_simple_main_title(topic_phrase, "cell", y_col=y_col),
             y_label=y_lab,
             x_axis_label=X_AXIS_LABEL_CELL,
-            out_path=out_dir / f"cell_{stem_y}_box_vs_{stem_cell}_faceted_by_dataset.png",
+            out_path=out_dir
+            / f"cell_{stem_y}_box_vs_{stem_cell}_faceted_by_dataset.png",
             dpi=dpi,
         )
 
@@ -895,7 +969,8 @@ def emit_topology_plots(
             title=_simple_main_title(topic_phrase, "sim_graph", y_col=y_col),
             y_label=y_lab,
             x_axis_label=X_AXIS_LABEL_SIMPLICIAL,
-            out_path=out_dir / f"simplicial_{stem_y}_box_vs_{stem_sim}_graph.png",
+            out_path=out_dir
+            / f"simplicial_{stem_y}_box_vs_{stem_sim}_graph.png",
             dpi=dpi,
         )
         boxplot_faceted_by_dataset_columns(
@@ -904,7 +979,8 @@ def emit_topology_plots(
             title=_simple_main_title(topic_phrase, "sim_graph", y_col=y_col),
             y_label=y_lab,
             x_axis_label=X_AXIS_LABEL_SIMPLICIAL,
-            out_path=out_dir / f"simplicial_{stem_y}_box_vs_{stem_sim}_graph_faceted_by_dataset.png",
+            out_path=out_dir
+            / f"simplicial_{stem_y}_box_vs_{stem_sim}_graph_faceted_by_dataset.png",
             dpi=dpi,
         )
 
@@ -924,7 +1000,8 @@ def emit_topology_plots(
             y_label=y_lab,
             x_axis_label=X_AXIS_LABEL_SIMPLICIAL,
             show_topo_x=False,
-            out_path=out_dir / f"simplicial_{stem_y}_box_vs_{stem_sim}_mantra.png",
+            out_path=out_dir
+            / f"simplicial_{stem_y}_box_vs_{stem_sim}_mantra.png",
             dpi=dpi,
         )
         boxplot_faceted_by_dataset_columns(
@@ -934,7 +1011,8 @@ def emit_topology_plots(
             y_label=y_lab,
             x_axis_label=X_AXIS_LABEL_SIMPLICIAL,
             show_topo_x=False,
-            out_path=out_dir / f"simplicial_{stem_y}_box_vs_{stem_sim}_mantra_faceted_by_dataset.png",
+            out_path=out_dir
+            / f"simplicial_{stem_y}_box_vs_{stem_sim}_mantra_faceted_by_dataset.png",
             dpi=dpi,
         )
 
@@ -950,7 +1028,9 @@ def main() -> None:
     p.add_argument("--agg-csv", type=Path, default=DEFAULT_AGG_CSV)
     p.add_argument("--out-dir", type=Path, default=DEFAULT_OUT_DIR)
     p.add_argument("--param-out-dir", type=Path, default=DEFAULT_PARAM_OUT_DIR)
-    p.add_argument("--per-param-out-dir", type=Path, default=DEFAULT_PER_PARAM_OUT_DIR)
+    p.add_argument(
+        "--per-param-out-dir", type=Path, default=DEFAULT_PER_PARAM_OUT_DIR
+    )
     p.add_argument("--dpi", type=int, default=150)
     args = p.parse_args()
 
@@ -959,14 +1039,24 @@ def main() -> None:
     if agg.empty:
         print(f"No rows in {args.agg_csv}")
         return
-    plot_df = add_timing_per_param_columns(map_agg_timing_to_plot_columns(enrich_submodel_columns(agg)))
+    plot_df = add_timing_per_param_columns(
+        map_agg_timing_to_plot_columns(enrich_submodel_columns(agg))
+    )
 
     sim_x, cell_x = lift_edges_plus_rank2_by_dataset(lift_df)
     stem_sim, stem_cell = STEM_SIMPLICIAL_LIFT, STEM_CELL_LIFT
 
     y_metrics_timing: tuple[tuple[str, str, str], ...] = (
-        ("train_epoch_sec_mean", "train_epoch", "Mean train time per epoch (s)"),
-        ("wall_runtime_sec_mean", "wall_runtime", "End-to-end training time (s)"),
+        (
+            "train_epoch_sec_mean",
+            "train_epoch",
+            "Mean train time per epoch (s)",
+        ),
+        (
+            "wall_runtime_sec_mean",
+            "wall_runtime",
+            "End-to-end training time (s)",
+        ),
     )
 
     emit_topology_plots(
@@ -982,7 +1072,9 @@ def main() -> None:
     )
 
     if PARAM_COUNT_COL not in plot_df.columns:
-        print(f"No column {PARAM_COUNT_COL!r} in aggregated export; skip parameter-count plots.")
+        print(
+            f"No column {PARAM_COUNT_COL!r} in aggregated export; skip parameter-count plots."
+        )
     else:
         args.param_out_dir.mkdir(parents=True, exist_ok=True)
         y_metrics_params: tuple[tuple[str, str, str], ...] = (

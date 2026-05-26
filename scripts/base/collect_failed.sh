@@ -88,30 +88,30 @@ command_count=0
 
 # Read the input file line by line
 while read -r line; do
-    
+
     # Check if the line starts with "Command: "
     if [[ "$line" == "Command: "* ]]; then
-    
+
         # Use Bash parameter expansion to remove the "Command: " prefix
         command_to_run="${line#Command: }"
-        
+
         # --- Write commands to the output file ---
         echo "echo '================================='" >> "$OUTPUT_SCRIPT_FILE"
         # Escape single quotes in the command string for the echo statement
         escaped_command=$(echo "$command_to_run" | sed "s/'/'\\\\''/g")
         echo "echo 'Rerunning: $escaped_command'" >> "$OUTPUT_SCRIPT_FILE"
         echo "echo '---------------------------------'" >> "$OUTPUT_SCRIPT_FILE"
-        
+
         # Write the actual command
         echo "$command_to_run" >> "$OUTPUT_SCRIPT_FILE"
-        
+
         # Add a success message
         echo "echo 'SUCCESS - Command finished.'" >> "$OUTPUT_SCRIPT_FILE"
         echo "echo ''" >> "$OUTPUT_SCRIPT_FILE" # Add a blank line
-        
+
         ((command_count++))
     fi
-    
+
 done < "$INPUT_LOG_FILE"
 
 # --- 4. Finalize ---

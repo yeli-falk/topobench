@@ -379,4 +379,3 @@ class TestSheafConnLapPE:
         assert out.SheafConnLapPE.shape == (num_nodes, 9)
         assert not torch.isnan(out.SheafConnLapPE).any()
         assert not torch.isinf(out.SheafConnLapPE).any()
-

@@ -6,6 +6,189 @@ from collections import defaultdict
 import numpy as np
 import omegaconf
 import torch
+from omegaconf import OmegaConf
+
+
+def register_all_resolvers():
+    """Register all custom OmegaConf resolvers.
+
+    This centralizes resolver registration to avoid duplication across modules. Should be called
+    before Hydra initialization in any script that uses configs.
+    """
+    OmegaConf.register_new_resolver(
+        "define_task_level", define_task_level, replace=True
+    )
+    OmegaConf.register_new_resolver(
+        "get_default_metrics", get_default_metrics, replace=True
+    )
+    OmegaConf.register_new_resolver(
+        "get_default_trainer", get_default_trainer, replace=True
+    )
+    OmegaConf.register_new_resolver(
+        "get_default_transform", get_default_transform, replace=True
+    )
+    OmegaConf.register_new_resolver(
+        "get_flattened_channels",
+        get_flattened_channels,
+        replace=True,
+    )
+    OmegaConf.register_new_resolver(
+        "get_required_lifting", get_required_lifting, replace=True
+    )
+    OmegaConf.register_new_resolver(
+        "get_monitor_metric", get_monitor_metric, replace=True
+    )
+    OmegaConf.register_new_resolver(
+        "get_monitor_mode", get_monitor_mode, replace=True
+    )
+    OmegaConf.register_new_resolver(
+        "get_non_relational_out_channels",
+        get_non_relational_out_channels,
+        replace=True,
+    )
+    OmegaConf.register_new_resolver(
+        "infer_in_channels", infer_in_channels, replace=True
+    )
+    OmegaConf.register_new_resolver(
+        "infer_num_cell_dimensions", infer_num_cell_dimensions, replace=True
+    )
+    OmegaConf.register_new_resolver(
+        "infer_topotune_num_cell_dimensions",
+        infer_topotune_num_cell_dimensions,
+        replace=True,
+    )
+    OmegaConf.register_new_resolver(
+        "parameter_multiplication",
+        lambda x, y: int(int(x) * int(y)),
+        replace=True,
+    )
+    OmegaConf.register_new_resolver(
+        "get_default_metrics", get_default_metrics, replace=True
+    )
+    OmegaConf.register_new_resolver(
+        "get_default_trainer", get_default_trainer, replace=True
+    )
+    OmegaConf.register_new_resolver(
+        "get_default_transform", get_default_transform, replace=True
+    )
+    OmegaConf.register_new_resolver(
+        "get_list_element", get_list_element, replace=True
+    )
+    OmegaConf.register_new_resolver(
+        "get_flattened_channels",
+        get_flattened_channels,
+        replace=True,
+    )
+    OmegaConf.register_new_resolver(
+        "get_required_lifting", get_required_lifting, replace=True
+    )
+    OmegaConf.register_new_resolver(
+        "get_monitor_metric", get_monitor_metric, replace=True
+    )
+    OmegaConf.register_new_resolver(
+        "get_monitor_mode", get_monitor_mode, replace=True
+    )
+    OmegaConf.register_new_resolver(
+        "get_non_relational_out_channels",
+        get_non_relational_out_channels,
+        replace=True,
+    )
+    OmegaConf.register_new_resolver(
+        "infer_in_channels", infer_in_channels, replace=True
+    )
+    OmegaConf.register_new_resolver(
+        "infer_num_cell_dimensions", infer_num_cell_dimensions, replace=True
+    )
+    OmegaConf.register_new_resolver(
+        "infer_topotune_num_cell_dimensions",
+        infer_topotune_num_cell_dimensions,
+        replace=True,
+    )
+    OmegaConf.register_new_resolver(
+        "parameter_multiplication",
+        lambda x, y: int(int(x) * int(y)),
+        replace=True,
+    )
+    OmegaConf.register_new_resolver(
+        "infer_in_khop_feature_dim",
+        infer_in_khop_feature_dim,
+        replace=True,
+    )
+    OmegaConf.register_new_resolver(
+        "infer_in_hasse_graph_agg_dim",
+        infer_in_hasse_graph_agg_dim,
+        replace=True,
+    )
+
+    OmegaConf.register_new_resolver(
+        "get_pse_dimensions",
+        get_pse_dimensions,
+        replace=True,
+    )
+
+    OmegaConf.register_new_resolver(
+        "get_fes_dimensions",
+        get_fes_dimensions,
+        replace=True,
+    )
+
+    OmegaConf.register_new_resolver(
+        "get_all_encoding_dimensions",
+        get_all_encoding_dimensions,
+        replace=True,
+    )
+
+    OmegaConf.register_new_resolver(
+        "get_hop_num_gpse",
+        lambda x: int(x)
+        + 1,  # 2-hop if copy_initial = True else 1-hop (only GPSE info)
+        replace=True,
+    )
+    OmegaConf.register_new_resolver(
+        "get_hop_num_pses", lambda x, y: len(x) + int(y), replace=True
+    )
+    OmegaConf.register_new_resolver(
+        "set_preserve_edge_attr",
+        set_preserve_edge_attr,
+        replace=True,
+    )
+    OmegaConf.register_new_resolver(
+        "infer_list_length",
+        infer_list_length,
+        replace=True,
+    )
+    OmegaConf.register_new_resolver(
+        "infer_list_length_plus_one",
+        infer_list_length_plus_one,
+        replace=True,
+    )
+    OmegaConf.register_new_resolver("pid", lambda: os.getpid())
+
+
+def define_task_level(dataset_task_level, learning_setting):
+    r"""Define the task level for a given dataset task level and learning setting.
+
+    Parameters
+    ----------
+    dataset_task_level : str
+        Task level defined in the dataset configuration file.
+    learning_setting : str
+        Learning setting defined in the dataset split parameters.
+
+    Returns
+    -------
+    str
+        Task level for the model.
+
+    Raises
+    ------
+    ValueError
+        If the dataset task level or learning setting is invalid.
+    """
+    if dataset_task_level == "node" and learning_setting == "inductive":
+        return "node_inductive"
+    else:
+        return dataset_task_level
 
 
 def get_flattened_channels(num_nodes, channels):

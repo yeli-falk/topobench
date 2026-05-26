@@ -104,7 +104,6 @@ import shlex
 from pathlib import Path
 
 import pandas as pd
-
 from main_loader import DATASETS as LOADER_DATASETS
 from utils import (
     CONFIG_PARAM_KEYS,
@@ -150,7 +149,7 @@ RERUN_MODEL_ALLOWLIST = frozenset(
         "simplicial/topotune",
     }
 )
-#RERUN_MODEL_ALLOWLIST: frozenset[str] | None = None
+# RERUN_MODEL_ALLOWLIST: frozenset[str] | None = None
 
 # For ``simplicial/hopse_m`` and ``cell/hopse_m`` only (requires default ``--group-by`` so the
 # FE vs PE shard exists): ``None`` → emit **both** best-val winners (FE branch ``f`` and PE ``pe``).
@@ -160,7 +159,9 @@ RERUN_HOPSE_M_BRANCHES: frozenset[str] | None = None
 
 # Repo ``scripts/`` (parent of ``hopse_plotting/``)
 _DEFAULT_SCRIPTS_DIR = Path(__file__).resolve().parent.parent
-DEFAULT_EMIT_SH_SEQUENTIAL = _DEFAULT_SCRIPTS_DIR / "best_val_reruns_sequential.sh"
+DEFAULT_EMIT_SH_SEQUENTIAL = (
+    _DEFAULT_SCRIPTS_DIR / "best_val_reruns_sequential.sh"
+)
 DEFAULT_EMIT_SH_PARALLEL = _DEFAULT_SCRIPTS_DIR / "best_val_reruns_parallel.sh"
 
 # Match sweep scripts ``trainer.max_epochs=500``.
@@ -199,7 +200,9 @@ _RERUN_SCCNN_MODEL_CSV = "simplicial/sccnn"
 _RERUN_SCCNN_MODEL_HYDRA = "simplicial/sccnn_custom"
 
 
-def _apply_rerun_model_hydra_rewrites(parts: list[str], *, csv_model: str) -> None:
+def _apply_rerun_model_hydra_rewrites(
+    parts: list[str], *, csv_model: str
+) -> None:
     """In-place: adjust ``model=`` overrides where the rerun CLI should differ from the CSV row."""
     m = str(csv_model).replace("\r", "").strip()
     if m == _RERUN_SCCNN_MODEL_CSV:
@@ -211,7 +214,10 @@ def _apply_rerun_model_hydra_rewrites(parts: list[str], *, csv_model: str) -> No
 
 
 _SANN_ENCODING_COMPLEX_DIM_PREFIX = "transforms.sann_encoding.complex_dim="
-_BACKBONE_COMPLEX_DIM_PREFIXES = ("++model.backbone.complex_dim=", "model.backbone.complex_dim=")
+_BACKBONE_COMPLEX_DIM_PREFIXES = (
+    "++model.backbone.complex_dim=",
+    "model.backbone.complex_dim=",
+)
 
 
 def _is_backbone_complex_dim_override(part: str) -> bool:
@@ -226,14 +232,18 @@ def _is_simplicial_sann_model(model: str) -> bool:
     return tail.startswith("sann")
 
 
-def _apply_backbone_complex_dim_overrides(parts: list[str], *, model: str) -> None:
+def _apply_backbone_complex_dim_overrides(
+    parts: list[str], *, model: str
+) -> None:
     """Drop or sync ``++model.backbone.complex_dim`` (simplicial SANN) / strip legacy single ``model.*``."""
     if _is_simplicial_sann_model(model):
         enc_val: str | None = None
         for p in parts:
             if p.startswith(_SANN_ENCODING_COMPLEX_DIM_PREFIX):
                 enc_val = p.split("=", 1)[1]
-        parts[:] = [p for p in parts if not _is_backbone_complex_dim_override(p)]
+        parts[:] = [
+            p for p in parts if not _is_backbone_complex_dim_override(p)
+        ]
         if enc_val is not None:
             parts.append(f"++model.backbone.complex_dim={enc_val}")
         return
@@ -250,7 +260,11 @@ def dataframe_with_hopse_m_rerun_branch(df: pd.DataFrame) -> pd.DataFrame:
     for _idx, row in out.iterrows():
         m = str(row.get("model", "")).strip()
         if m in HOPSE_M_MODEL_PATHS:
-            ev = row[MODEL_PREPROC_ENCODINGS] if MODEL_PREPROC_ENCODINGS in row.index else None
+            ev = (
+                row[MODEL_PREPROC_ENCODINGS]
+                if MODEL_PREPROC_ENCODINGS in row.index
+                else None
+            )
             branches.append(hopse_m_encoding_f_vs_pe_sub_id(ev))
         else:
             branches.append("")
@@ -280,7 +294,9 @@ def dataframe_filter_rerun_datasets(
         raise KeyError("CSV missing 'dataset' column")
 
     def canon(ds_val: object) -> str:
-        return hydra_dataset_key_from_loader_identity(str(ds_val).replace("\r", "").strip())
+        return hydra_dataset_key_from_loader_identity(
+            str(ds_val).replace("\r", "").strip()
+        )
 
     mask = df["dataset"].map(lambda v: canon(v) in allowed_hydra)
     return df.loc[mask].copy()
@@ -323,7 +339,11 @@ def _resolve_fixed_args_profile(model: str, profile: str) -> str:
             return "sccnn"
         if m.split("/")[-1] == "cwn":
             return "cwn"
-        if m.startswith("graph/gin") or m.startswith("graph/gat") or m.startswith("graph/gcn"):
+        if (
+            m.startswith("graph/gin")
+            or m.startswith("graph/gat")
+            or m.startswith("graph/gcn")
+        ):
             return "graph"
         if m.startswith("graph/"):
             return "graph"
@@ -417,7 +437,9 @@ def _base_hydra_parts_for_row(
         parts.append(f"+logger.wandb.entity={wandb_entity}")
         parts.append(f"logger.wandb.project={wandb_project}")
         if wandb_run_name:
-            base_nm = f"{model.replace('/', '__')}__{dataset.replace('/', '__')}"
+            base_nm = (
+                f"{model.replace('/', '__')}__{dataset.replace('/', '__')}"
+            )
             if _RERUN_HOPSE_M_BRANCH_COL in row.index:
                 br = str(row.get(_RERUN_HOPSE_M_BRANCH_COL, "") or "").strip()
                 if br == "f":
@@ -432,7 +454,9 @@ def _base_hydra_parts_for_row(
 
 
 def _sorted_winner_rows(df, *, group_cols: list[str]):
-    winners = aggregated_rows_best_validation_per_group(df, group_cols=group_cols)
+    winners = aggregated_rows_best_validation_per_group(
+        df, group_cols=group_cols
+    )
     if winners.empty:
         raise ValueError("No rows after best-val selection (empty input?)")
     rows = [winners.iloc[i] for i in range(len(winners))]
@@ -466,7 +490,9 @@ def _filter_winner_rows_by_allowlist(rows: list) -> list:
     out: list = []
     for row in rows:
         m = str(row.get("model", "")).replace("\r", "").strip()
-        if allow is not None and not _csv_model_matches_rerun_allowlist(m, allow):
+        if allow is not None and not _csv_model_matches_rerun_allowlist(
+            m, allow
+        ):
             continue
         if branches is not None and m in HOPSE_M_MODEL_PATHS:
             if _RERUN_HOPSE_M_BRANCH_COL not in row.index:
@@ -524,7 +550,9 @@ def emit_sequential_rerun_script(
 
     n_cmd = 0
     for row in rows:
-        seeds = _row_data_seeds(row, keep_row_seed=keep_row_seed, default_seeds=data_seeds)
+        seeds = _row_data_seeds(
+            row, keep_row_seed=keep_row_seed, default_seeds=data_seeds
+        )
         multi = len(seeds) > 1
         for data_seed in seeds:
             suffix = f"__ds{data_seed}" if multi and wandb_run_name else ""
@@ -544,7 +572,9 @@ def emit_sequential_rerun_script(
             parts.extend(app)
             cmd = shlex.join([interpreter, "-m", "topobench", *parts])
             seed_note = f"  |  data_seed={data_seed}" if multi else ""
-            lines.append(f"# {model}  |  {dataset}{_hopse_m_branch_comment(row)}{seed_note}")
+            lines.append(
+                f"# {model}  |  {dataset}{_hopse_m_branch_comment(row)}{seed_note}"
+            )
             lines.append(cmd)
             lines.append("")
             n_cmd += 1
@@ -607,7 +637,7 @@ def emit_parallel_rerun_script(
         'for gpu in "${_PHYSICAL_GPUS[@]}"; do',
         '  for ((j=1; j<=_JOBS_PER_GPU; j++)); do gpus+=("$gpu"); done',
         "done",
-        'declare -a slot_pids',
+        "declare -a slot_pids",
         'for i in "${!gpus[@]}"; do slot_pids[$i]=0; done',
         "",
         "_acquire_rerun_slot() {",
@@ -634,7 +664,9 @@ def emit_parallel_rerun_script(
 
     n_cmd = 0
     for row in rows:
-        seeds = _row_data_seeds(row, keep_row_seed=keep_row_seed, default_seeds=data_seeds)
+        seeds = _row_data_seeds(
+            row, keep_row_seed=keep_row_seed, default_seeds=data_seeds
+        )
         multi = len(seeds) > 1
         for data_seed in seeds:
             suffix = f"__ds{data_seed}" if multi and wandb_run_name else ""
@@ -659,7 +691,9 @@ def emit_parallel_rerun_script(
             else:
                 cmd_body = f"{pre} {dev_fragment}"
             seed_note = f"  |  data_seed={data_seed}" if multi else ""
-            lines.append(f"# {model}  |  {dataset}{_hopse_m_branch_comment(row)}{seed_note}")
+            lines.append(
+                f"# {model}  |  {dataset}{_hopse_m_branch_comment(row)}{seed_note}"
+            )
             lines.append("_acquire_rerun_slot")
             lines.append(f"{cmd_body} &")
             lines.append("slot_pids[$_RERUN_SLOT_IDX]=$!")
@@ -769,7 +803,16 @@ def main() -> None:
     )
     p.add_argument(
         "--fixed-args-profile",
-        choices=("auto", "graph", "hopse", "topotune", "sann", "sccnn", "cwn", "none"),
+        choices=(
+            "auto",
+            "graph",
+            "hopse",
+            "topotune",
+            "sann",
+            "sccnn",
+            "cwn",
+            "none",
+        ),
         default="auto",
         help=(
             "Sweep-style extras after row overrides: min_epochs, check_val_every_n_epoch, "
@@ -832,7 +875,9 @@ def main() -> None:
     df = load_wandb_export_csv(args.input)
     n_in = len(df)
     if not args.all_datasets:
-        df = dataframe_filter_rerun_datasets(df, allowed_hydra=DEFAULT_RERUN_ALLOWED_HYDRA_DATASETS)
+        df = dataframe_filter_rerun_datasets(
+            df, allowed_hydra=DEFAULT_RERUN_ALLOWED_HYDRA_DATASETS
+        )
         print(
             f"Dataset filter: {n_in} -> {len(df)} rows "
             f"(main_loader.DATASETS minus cocitation cora/citeseer/pubmed; "
@@ -848,7 +893,9 @@ def main() -> None:
     requested_group = tuple(str(c).strip() for c in args.group_by)
     if requested_group == _DEFAULT_RERUN_GROUP_COLS:
         df = dataframe_with_hopse_m_rerun_branch(df)
-        effective_group = list(_DEFAULT_RERUN_GROUP_COLS) + [_RERUN_HOPSE_M_BRANCH_COL]
+        effective_group = list(_DEFAULT_RERUN_GROUP_COLS) + [
+            _RERUN_HOPSE_M_BRANCH_COL
+        ]
         print(
             f"Grouping: {effective_group!r} (HOPSE-M: separate best-val winner per F vs C encodings)."
         )

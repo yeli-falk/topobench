@@ -11,7 +11,7 @@
 # ==============================================================================
 # DO NOT MISS THIS
 
-export SELECTED_GPUS="2,3,4,5,6,7" 
+export SELECTED_GPUS="2,3,4,5,6,7"
 wandb_entity="gbg141-hopse"
 RESUME=true  # Set to true to skip already-completed runs (reads SUCCESSFUL_RUNS.log)
 
@@ -101,19 +101,19 @@ try:
     for line in out.strip().splitlines():
         idx, mem = line.split(',')
         idx = idx.strip()
-        
+
         # 2. Skip this GPU if it's not in our selected list
         if allowed_gpus and idx not in allowed_gpus:
             continue
-            
+
         indices.append(idx)
         mem_mb.append(int(mem.strip()))
-        
+
     # Safety check in case the selected GPUs don't exist
     if not indices:
         print('0')
         exit(0)
-        
+
     min_mem_gb = min(mem_mb) / 1024
     if min_mem_gb >= 80:
         jobs = 4
@@ -123,7 +123,7 @@ try:
         jobs = 2
     else:
         jobs = 3
-        
+
     print(jobs, ' '.join(indices))
 except Exception:
     print('2 0')
@@ -307,16 +307,16 @@ for combo in combinations:
                     is_transductive = True
         else:
             print(f'⚠️ WARNING: Could not find config at {yaml_path}', file=sys.stderr)
-        
+
         transductive_cache[dataset_val] = is_transductive
 
     if is_transductive:
-        # If this isn't the first batch size in the sweep list, skip it 
+        # If this isn't the first batch size in the sweep list, skip it
         # to avoid running the exact same bs=1 experiment multiple times.
         if current_bs != first_bs:
             skipped += 1
             continue
-        
+
         # Mutate the current combination to force batch_size to 1
         new_combo = []
         for (tag, key, val) in combo:

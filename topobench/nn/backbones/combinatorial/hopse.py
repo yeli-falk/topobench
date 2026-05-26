@@ -119,6 +119,8 @@ class HOPSELayer(torch.nn.Module):
         Update function.
     initialization : str
         Initialization method.
+    layer_norm : bool, optional
+        Whether to apply layer normalization (default: True).
 
     Returns
     -------

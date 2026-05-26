@@ -1,6 +1,5 @@
 """Main entry point for training and testing models."""
 
-import os
 import random
 from pathlib import Path
 from typing import Any
@@ -14,7 +13,7 @@ from lightning import Callback, LightningModule, Trainer
 from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.loggers import Logger
 from lightning.pytorch.loggers.wandb import WandbLogger
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig
 
 from topobench.data.preprocessor import PreProcessor
 from topobench.dataloader import TBDataloader
@@ -27,28 +26,7 @@ from topobench.utils import (
     log_hyperparameters,
     task_wrapper,
 )
-from topobench.utils.config_resolvers import (
-    get_all_encoding_dimensions,
-    get_default_metrics,
-    get_default_trainer,
-    get_default_transform,
-    get_fes_dimensions,
-    get_flattened_channels,
-    get_list_element,
-    get_monitor_metric,
-    get_monitor_mode,
-    get_non_relational_out_channels,
-    get_pse_dimensions,
-    get_required_lifting,
-    infer_in_channels,
-    infer_in_hasse_graph_agg_dim,
-    infer_in_khop_feature_dim,
-    infer_list_length,
-    infer_list_length_plus_one,
-    infer_num_cell_dimensions,
-    infer_topotune_num_cell_dimensions,
-    set_preserve_edge_attr,
-)
+from topobench.utils.config_resolvers import register_all_resolvers
 
 rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
 # ------------------------------------------------------------------------------------ #
@@ -69,105 +47,8 @@ rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
 # ------------------------------------------------------------------------------------ #
 
 
-OmegaConf.register_new_resolver(
-    "get_default_metrics", get_default_metrics, replace=True
-)
-OmegaConf.register_new_resolver(
-    "get_default_trainer", get_default_trainer, replace=True
-)
-OmegaConf.register_new_resolver(
-    "get_default_transform", get_default_transform, replace=True
-)
-OmegaConf.register_new_resolver(
-    "get_list_element", get_list_element, replace=True
-)
-OmegaConf.register_new_resolver(
-    "get_flattened_channels",
-    get_flattened_channels,
-    replace=True,
-)
-OmegaConf.register_new_resolver(
-    "get_required_lifting", get_required_lifting, replace=True
-)
-OmegaConf.register_new_resolver(
-    "get_monitor_metric", get_monitor_metric, replace=True
-)
-OmegaConf.register_new_resolver(
-    "get_monitor_mode", get_monitor_mode, replace=True
-)
-OmegaConf.register_new_resolver(
-    "get_non_relational_out_channels",
-    get_non_relational_out_channels,
-    replace=True,
-)
-OmegaConf.register_new_resolver(
-    "infer_in_channels", infer_in_channels, replace=True
-)
-OmegaConf.register_new_resolver(
-    "infer_num_cell_dimensions", infer_num_cell_dimensions, replace=True
-)
-OmegaConf.register_new_resolver(
-    "infer_topotune_num_cell_dimensions",
-    infer_topotune_num_cell_dimensions,
-    replace=True,
-)
-OmegaConf.register_new_resolver(
-    "parameter_multiplication", lambda x, y: int(int(x) * int(y)), replace=True
-)
-OmegaConf.register_new_resolver(
-    "infer_in_khop_feature_dim",
-    infer_in_khop_feature_dim,
-    replace=True,
-)
-OmegaConf.register_new_resolver(
-    "infer_in_hasse_graph_agg_dim",
-    infer_in_hasse_graph_agg_dim,
-    replace=True,
-)
-
-OmegaConf.register_new_resolver(
-    "get_pse_dimensions",
-    get_pse_dimensions,
-    replace=True,
-)
-
-OmegaConf.register_new_resolver(
-    "get_fes_dimensions",
-    get_fes_dimensions,
-    replace=True,
-)
-
-OmegaConf.register_new_resolver(
-    "get_all_encoding_dimensions",
-    get_all_encoding_dimensions,
-    replace=True,
-)
-
-OmegaConf.register_new_resolver(
-    "get_hop_num_gpse",
-    lambda x: int(x)
-    + 1,  # 2-hop if copy_initial = True else 1-hop (only GPSE info)
-    replace=True,
-)
-OmegaConf.register_new_resolver(
-    "get_hop_num_pses", lambda x, y: len(x) + int(y), replace=True
-)
-OmegaConf.register_new_resolver(
-    "set_preserve_edge_attr",
-    set_preserve_edge_attr,
-    replace=True,
-)
-OmegaConf.register_new_resolver(
-    "infer_list_length",
-    infer_list_length,
-    replace=True,
-)
-OmegaConf.register_new_resolver(
-    "infer_list_length_plus_one",
-    infer_list_length_plus_one,
-    replace=True,
-)
-OmegaConf.register_new_resolver("pid", lambda: os.getpid())
+# Register custom resolvers before Hydra initialization
+register_all_resolvers()
 
 
 def initialize_hydra() -> DictConfig:

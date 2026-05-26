@@ -5,7 +5,7 @@
 # ==========================================================
 # This variable sets the default root directory for all logs.
 #
-# The ":=" syntax means: 
+# The ":=" syntax means:
 # If $LOGGING_ROOT_DIR is already set (e.g., by an calling script), use that value.
 # If $LOGGING_ROOT_DIR is unset or null, set it to the default value "./logs".
 #
@@ -38,16 +38,16 @@ run_and_log() {
     local log_group="$2"
     local run_name="$3"
     local root_dir="${4:-$LOGGING_ROOT_DIR}"
-    
+
     local specific_log_dir="$root_dir/$log_group"
     mkdir -p "$specific_log_dir"
-    
+
     local success_log="$specific_log_dir/SUCCESSFUL_RUNS.log"
     local failed_log="$specific_log_dir/FAILED_RUNS.log"
-    
+
     local stdout_log="$specific_log_dir/${run_name}_stdout.log"
     local stderr_log="$specific_log_dir/${run_name}_stderr.log"
-    
+
     # Unique temp files using the background subshell PID
     local tmp_stdout="${stdout_log}.${BASHPID}.tmp"
     local tmp_stderr="${stderr_log}.${BASHPID}.tmp"
@@ -60,14 +60,14 @@ run_and_log() {
     echo "--- [START] Running: $run_name (PID: $BASHPID) ---"
 
     for attempt in $(seq 1 $max_attempts); do
-        
+
         # If this is a retry, print a warning and sleep
         if [ "$attempt" -gt 1 ]; then
             echo "⚠️ [RETRY] $run_name failed on attempt $((attempt-1)). Waiting ${wait_time}s before attempt $attempt..."
             sleep $wait_time
         fi
 
-        # Execute synchronously. 
+        # Execute synchronously.
         # Note: > overwrites the temp file on a retry, so you only keep the logs of the current attempt.
         eval "$cmd" > "$tmp_stdout" 2> "$tmp_stderr"
         exit_code=$?
@@ -81,19 +81,19 @@ run_and_log() {
     # --- FINAL LOGGING ---
     if [ $exit_code -eq 0 ]; then
         echo "✅ [SUCCESS] Finished: $run_name"
-        
+
         # Safe concurrent writing for the success log
         (
             flock -x 200
             echo "$(date): [SUCCESS] ${run_name}" >> "$success_log"
         ) 200> "${specific_log_dir}/.success.lock"
-        
+
         # Clean up temp files
         rm -f "$tmp_stdout" "$tmp_stderr"
         return 0
     else
         echo "❌ [FAILURE] Finished: $run_name (Failed after $max_attempts attempts. Exit Code: $exit_code)"
-        
+
         # Move the temp files from the final failed attempt to permanent logs
         mv "$tmp_stdout" "$stdout_log"
         mv "$tmp_stderr" "$stderr_log"
@@ -114,13 +114,13 @@ run_and_log() {
         echo "----------------- ERROR OUTPUT ($run_name) -----------------"
         tail -n 15 "$stderr_log"
         echo "----------------------------------------------------------------"
-        
+
         return 1
     fi
 }
 
 
-# Example: 
+# Example:
 
 #!/bin/bash
 
@@ -168,18 +168,18 @@ run_and_log() {
 #     echo "============================================================"
 
 #     for model in "${MODELS[@]}"; do
-        
+
 #         # 7. Use 'eval' to substitute the $model variable into the command
 #         eval "final_cmd=\"$cmd_template\""
-        
+
 #         # 8. Define a unique run name for this specific job.
 #         # Here, we just use the model name.
 #         local run_name="$model"
-        
+
 #         # 9. Call the new, general-purpose logger
 #         # It will handle all logging, directory creation, and error reporting.
 #         run_and_log "$final_cmd" "$log_group" "$run_name" "$ROOT_LOG_DIR"
-        
+
 #         # The return code (0 for success, 1 for failure) is available
 #         # in $? if you need to check it, e.g., to stop the script.
 #         # if [ $? -ne 0 ]; then

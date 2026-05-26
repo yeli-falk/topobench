@@ -10,12 +10,12 @@ from datetime import date
 def download_wandb_runs(project_name, user, overwrite=False):
     """
     Downloads and saves Weights & Biases runs for a given project.
-    
+
     Args:
         project_name (str): The wandb project name.
         user (str): The wandb username.
         overwrite (bool): Whether to overwrite existing CSV file.
-        
+
     Returns:
         pd.DataFrame: DataFrame containing run summaries and configs.
     """
@@ -60,5 +60,5 @@ if __name__ == "__main__":
 
         # Set overwrite=True if you want to re-download and overwrite the CSV
         df = download_wandb_runs(project_name=PROJECT_NAME, user=USER, overwrite=False)
-        
+
         print(df.head())  # Print a preview of the dataframe

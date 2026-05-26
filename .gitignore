@@ -91,6 +91,11 @@ tutorials/*.csv
 tutorials/checkpoints
 tutorials/checkpoints/*
 
+# GraphUniverse challenge notebook outputs (JSON + figures); keep results.json tracked
+2026_tdl_challenge/outputs/**
+!2026_tdl_challenge/outputs/**/
+!2026_tdl_challenge/outputs/**/results.json
+
 # IPython
 profile_default/
 ipython_config.py

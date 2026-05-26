@@ -56,6 +56,7 @@ dependencies=[
     "rootutils",
     "topomodelx @ git+https://github.com/pyt-team/TopoModelX.git",
     "toponetx @ git+https://github.com/pyt-team/TopoNetX.git@c378925",
+    "graph-universe==0.1.2",
     "lightning==2.4.0",
     "torch-scatter",
     "torch-sparse",
@@ -145,7 +146,7 @@ wrap-descriptions = 79
 
 [tool.ruff]
 target-version = "py311"
-extend-exclude = ["test", "tutorials", "notebooks"]
+extend-exclude = ["test", "tutorials", "notebooks", "scripts", "docs", "2026_tdl_challenge"]
 line-length = 79
 
 [tool.ruff.format]

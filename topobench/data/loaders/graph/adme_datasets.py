@@ -1,5 +1,4 @@
-"""Loaders for TDC (Therapeutics Data Commons) ADME datasets with SMILES to graph conversion.
-"""
+"""Loaders for TDC (Therapeutics Data Commons) ADME datasets with SMILES to graph conversion."""
 
 import os
 from pathlib import Path
@@ -65,9 +64,22 @@ class ADMEDatasetLoader(AbstractLoader):
         ValueError
             If invalid SMILES strings are encountered.
         """
-        
+
         class _ADMEDataset(InMemoryDataset):
-            """Internal InMemoryDataset for ADME data."""
+            """Internal InMemoryDataset for ADME data.
+
+            Parameters
+            ----------
+            root : str
+                Root directory where the dataset should be stored.
+            data_name : str
+                Name of the ADME dataset.
+            split_idx : dict
+                Dictionary mapping split names ("train", "valid", "test")
+                to index tensors.
+            graph_list : list[torch_geometric.data.Data]
+                List of pre-computed PyG graphs to be collated.
+            """
 
             def __init__(self, root, data_name, split_idx, graph_list):
                 self.data_name = data_name
@@ -78,14 +90,23 @@ class ADMEDatasetLoader(AbstractLoader):
 
             @property
             def processed_file_names(self):
+                """Return the list of processed dataset file names.
+
+                Returns
+                -------
+                list[str]
+                    File names used to cache the processed dataset.
+                """
                 return [f"{self.data_name}.pt"]
 
             def process(self):
+                """Collate the pre-built graphs and save them to disk."""
                 self.data, self.slices = self.collate(self._graph_list)
                 torch.save((self.data, self.slices), self.processed_paths[0])
 
             def __repr__(self):
                 return f"ADMEDataset({self.data_name}, {len(self)})"
+
         # Define which datasets are classification vs regression
         CLASSIFICATION_DATASETS = {
             # Absorption
@@ -159,16 +180,12 @@ class ADMEDatasetLoader(AbstractLoader):
 
                 # Create PyG Data object
                 if is_classification:
-                    label_tensor = torch.tensor(
-                        int(label), dtype=torch.long
-                    )
+                    label_tensor = torch.tensor(int(label), dtype=torch.long)
                 else:
                     label_tensor = torch.tensor([label], dtype=torch.float)
 
                 pyg_graph = Data(
-                    x=torch.tensor(
-                        graph_dict["node_feat"], dtype=torch.float
-                    ),
+                    x=torch.tensor(graph_dict["node_feat"], dtype=torch.float),
                     edge_index=torch.tensor(
                         graph_dict["edge_index"], dtype=torch.long
                     ),
@@ -214,7 +231,7 @@ class ADMEDatasetLoader(AbstractLoader):
         -------
         Path
             The path to the dataset directory.
-            Format: {root_data_dir}/{dataset_name}/
-            Example: data/graph/ADME/BBB_Martins/
+            Format: {root_data_dir}/{dataset_name}/.
+            Example: data/graph/ADME/BBB_Martins/.
         """
         return os.path.join(self.root_data_dir, self.parameters.data_name)

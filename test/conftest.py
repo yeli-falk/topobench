@@ -13,7 +13,7 @@ if "PROJECT_ROOT" not in os.environ:
     # Set PROJECT_ROOT to the directory containing the 'test' folder
     # Assuming: project_root/test/conftest.py
     os.environ["PROJECT_ROOT"] = str(Path(__file__).parent.parent.resolve())
-    
+
 import pytest
 import torch
 import torch_geometric
@@ -31,12 +31,12 @@ from topobench.transforms.data_manipulations.precompute_khop_features import (
 @pytest.fixture
 def mocker_fixture(mocker):
     """Return pytest mocker, used when one want to use mocker in setup_method.
-    
+
     Parameters
     ----------
     mocker : pytest_mock.plugin.MockerFixture
         A pytest mocker.
-        
+
     Returns
     -------
     pytest_mock.plugin.MockerFixture
@@ -48,7 +48,7 @@ def mocker_fixture(mocker):
 @pytest.fixture
 def simple_graph_0():
     """Create a manual graph for testing purposes.
-    
+
     Returns
     -------
     torch_geometric.data.Data
@@ -94,7 +94,7 @@ def simple_graph_0():
 @pytest.fixture
 def simple_graph_1():
     """Create a manual graph for testing purposes.
-    
+
     Returns
     -------
     torch_geometric.data.Data
@@ -154,12 +154,12 @@ def simple_graph_1():
 @pytest.fixture
 def sg1_clique_lifted(simple_graph_1):
     """Return a simple graph with a clique lifting.
-    
+
     Parameters
     ----------
     simple_graph_1 : torch_geometric.data.Data
         A simple graph data object.
-    
+
     Returns
     -------
     torch_geometric.data.Data
@@ -175,12 +175,12 @@ def sg1_clique_lifted(simple_graph_1):
 @pytest.fixture
 def sg1_clique_lifted_precompute_k_hop(simple_graph_1):
     """Return a simple graph with a clique lifting and a precomputed k-hop neighbourhood embedding.
-    
+
     Parameters
     ----------
     simple_graph_1 : torch_geometric.data.Data
         A simple graph data object.
-    
+
     Returns
     -------
     torch_geometric.data.Data
@@ -206,12 +206,12 @@ def sg1_clique_lifted_precompute_k_hop(simple_graph_1):
 @pytest.fixture
 def sg1_cell_lifted(simple_graph_1):
     """Return a simple graph with a cell lifting.
-    
+
     Parameters
     ----------
     simple_graph_1 : torch_geometric.data.Data
         A simple graph data object.
-        
+
     Returns
     -------
     torch_geometric.data.Data
@@ -226,7 +226,7 @@ def sg1_cell_lifted(simple_graph_1):
 @pytest.fixture
 def simple_graph_2():
     """Create a manual graph for testing purposes.
-    
+
     Returns
     -------
     torch_geometric.data.Data
@@ -292,7 +292,7 @@ def simple_graph_2():
 @pytest.fixture
 def random_graph_input():
     """Create a random graph for testing purposes.
-    
+
     Returns
     -------
     torch.Tensor
@@ -311,11 +311,10 @@ def random_graph_input():
     x = torch.randn(num_nodes, 12)
     edges_1 = torch.randint(0, num_nodes, (2, num_nodes*2))
     edges_2 = torch.randint(0, num_nodes, (2, num_nodes*2))
-    
+
     d_feat_1, d_feat_2 = 5, 17
 
     x_1 = torch.randn(num_nodes*2, d_feat_1)
     x_2 = torch.randn(num_nodes*2, d_feat_2)
 
     return x, x_1, x_2, edges_1, edges_2
-

@@ -5,7 +5,7 @@ project_name="GRAPH_$dataset"
 # =====================
 # DATA
 # =====================
-DATA_SEEDS=(0 3 5 7 9) 
+DATA_SEEDS=(0 3 5 7 9)
 
 # =====================
 # MODEL PARAMETERS
@@ -36,10 +36,10 @@ BATCH_SIZES_STR=$(IFS=,; echo "${BATCH_SIZES[*]}")
 # =====================
 
 # gpus=(0 1 2 3 4 5 6 7)
-# for i in {0..4}; do 
+# for i in {0..4}; do
 #     CUDA=${gpus[$i]}  # Use the GPU number from our gpus array
 #     data_seed=${DATA_SEEDS[$i]} # Use the neighbourhood from our neighbourhoods array
-    
+
 #     for lr in ${LEARNING_RATES[*]}
 #     do
 #         for batch_size in ${BATCH_SIZES[*]}
@@ -71,10 +71,10 @@ BATCH_SIZES_STR=$(IFS=,; echo "${BATCH_SIZES[*]}")
 
 
 # gpus=(0 1 2 3 4 5 6 7)
-# for i in {0..4}; do 
+# for i in {0..4}; do
 #     CUDA=${gpus[$i]}  # Use the GPU number from our gpus array
 #     data_seed=${DATA_SEEDS[$i]} # Use the neighbourhood from our neighbourhoods array
-    
+
 #     for lr in ${LEARNING_RATES[*]}
 #     do
 #         for batch_size in ${BATCH_SIZES[*]}
@@ -105,10 +105,10 @@ BATCH_SIZES_STR=$(IFS=,; echo "${BATCH_SIZES[*]}")
 
 
 gpus=(0 1 2 3 4 5 6 7)
-for i in {0..4}; do 
+for i in {0..4}; do
     CUDA=${gpus[$i]}  # Use the GPU number from our gpus array
     data_seed=${DATA_SEEDS[$i]} # Use the neighbourhood from our neighbourhoods array
-    
+
     for lr in ${LEARNING_RATES[*]}
     do
         for batch_size in ${BATCH_SIZES[*]}
@@ -141,10 +141,10 @@ wait
 
 dataset='mantra_orientation'
 gpus=(0 1 2 3 4 5 6 7)
-for i in {0..4}; do 
+for i in {0..4}; do
     CUDA=${gpus[$i]}  # Use the GPU number from our gpus array
     data_seed=${DATA_SEEDS[$i]} # Use the neighbourhood from our neighbourhoods array
-    
+
     for lr in ${LEARNING_RATES[*]}
     do
         for batch_size in ${BATCH_SIZES[*]}
@@ -173,6 +173,3 @@ for i in {0..4}; do
     done
 done
 wait
-
-
-

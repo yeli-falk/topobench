@@ -4,7 +4,7 @@
 # =====================
 # DATA
 # =====================
-DATA_SEEDS=(0 3 5 7 9) 
+DATA_SEEDS=(0 3 5 7 9)
 
 # =====================
 # MODEL PARAMETERS
@@ -39,10 +39,10 @@ INDICENCE_SIGNED_STR=$(IFS=,; echo "${INDICENCE_SIGNED[*]}")  # Convert to comma
 gpus=(4 5 6 7)
 datasets=('CSL') #'mantra_orientation'
 
-for dataset in ${datasets[*]} 
+for dataset in ${datasets[*]}
 do
     project_name="CSL"
-            
+
     # python topobench/run.py\
     #     dataset=simplicial/$dataset \
     #     model=simplicial/sccnn_custom \
@@ -63,14 +63,14 @@ do
     #     optimizer.parameters.weight_decay=0.01\
     #     callbacks.early_stopping.patience=1\
     #     --multirun &
-    # wait 
+    # wait
     # sleep 5
 
     # =====================
-    for i in {0..4}; do 
+    for i in {0..4}; do
         CUDA=${gpus[$i]}  # Use the GPU number from our gpus array
         data_seed=${DATA_SEEDS[$i]} # Use the neighbourhood from our neighbourhoods array
-        
+
         for lr in ${LEARNING_RATES[*]}
         do
             for batch_size in ${BATCH_SIZES[*]}

@@ -4,7 +4,7 @@
 # =====================
 # DATA
 # =====================
-DATA_SEEDS=(0 3 5 7 9) 
+DATA_SEEDS=(0 3 5 7 9)
 
 # =====================
 # MODEL PARAMETERS
@@ -43,7 +43,7 @@ BATCH_SIZES_STR=$(IFS=,; echo "${BATCH_SIZES[*]}")
 # batch_sizes=(128 256)
 # learning_rates=(0.01 0.001)
 neighborhoods=(
-    # adjacency 
+    # adjacency
     # We have 8th gpu hence we can add one more neighbourhood
     "['up_adjacency-0','up_adjacency-1','2-up_adjacency-0','down_adjacency-1','down_adjacency-2','2-down_adjacency-2']"
 )
@@ -53,13 +53,13 @@ datasets=(GCB) #
 # for dataset in ${datasets[*]}
 # do
 #     gpus=(0 1 2 3 4 5 6 7)
-#     for i in {0..7}; do 
+#     for i in {0..7}; do
 #         CUDA=${gpus[$i]}  # Use the GPU number from our gpus array
 #         neighborhood=${neighborhoods[$i]} # Use the neighbourhood from our neighbourhoods array
 
 #         for pretrain_model in ${PRETRAIN_MODELS[*]}
 #         do
-            
+
 #             python topobench/run_brec.py\
 #                 dataset=graph/$dataset\
 #                 model=simplicial/hopse_g\
@@ -91,11 +91,11 @@ datasets=(GCB) #
 gpus=(0 1 2 3 4 5 6 7)
 for dataset in ${datasets[*]}
 do
-    for i in {0..7}; do 
+    for i in {0..7}; do
         CUDA=${gpus[$i]}  # Use the GPU number from our gpus array
         neighborhood=${neighborhoods[$i]} # Use the neighbourhood from our neighbourhoods array
 
-            
+
         python topobench/run.py\
             dataset=graph/$dataset\
             model=cell/hopse_m\

@@ -328,5 +328,3 @@ class TestPPRFE:
 
         # First 5 columns should be original features
         assert torch.allclose(out.x[:, :5], x_orig)
-
-

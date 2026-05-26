@@ -5,7 +5,7 @@ project_name="rebutal_GIN_$dataset"
 # =====================
 # DATA
 # =====================
-DATA_SEEDS=(0 3 5 7 9) 
+DATA_SEEDS=(0 3 5 7 9)
 
 # =====================
 # MODEL PARAMETERS
@@ -42,11 +42,11 @@ neighborhoods=(
 )
 
 gpus=(0 1 2 3 4 5 6 7)
-for i in {0..7}; do 
+for i in {0..7}; do
     CUDA=${gpus[$i]}  # Use the GPU number from our gpus array
 
     for pe_type in ${PE_TYPES[*]}
-    do 
+    do
         python topobench/run.py\
             dataset=graph/$dataset\
             model=graph/hopse_gin\
@@ -75,14 +75,14 @@ done
 wait
 
 gpus=(0 1 2 3 4 5 6 7)
-for i in {0..7}; do 
+for i in {0..7}; do
     CUDA=${gpus[$i]}  # Use the GPU number from our gpus array
 
     for pe_type in ${PE_TYPES[*]}
     do
         for batch_size in ${batch_sizes}
         do
-        
+
             python topobench/run.py\
                 dataset=graph/$dataset\
                 model=graph/hopse_gin\

@@ -4,7 +4,7 @@ project_name=".rebuttal_cell_$dataset"
 # =====================
 # DATA
 # =====================
-DATA_SEEDS=(0 3 5 7 9) 
+DATA_SEEDS=(0 3 5 7 9)
 
 # =====================
 # MODEL PARAMETERS
@@ -41,7 +41,7 @@ BATCH_SIZES_STR=$(IFS=,; echo "${BATCH_SIZES[*]}")
 # PARAMETERS OVER WHICH WE PERFORM PARALLEL RUNS
 # =====================
 neighborhoods=(
-    # adjacency 
+    # adjacency
     "['up_adjacency-0']"
     # incidence
     "['up_adjacency-0','down_incidence-1']"
@@ -49,11 +49,11 @@ neighborhoods=(
 
 # TODO: fix bug with transforms.one_hot_node_degree_features.degrees_fields=x\
 gpus=(0 1 2 3)
-for i in {0..1}; do 
+for i in {0..1}; do
     CUDA=${gpus[$i]}  # Use the GPU number from our gpus array
     neighborhood=${neighborhoods[$i]} # Use the neighbourhood from our neighbourhoods array
 
-    
+
     python topobench/run.py\
         dataset=simplicial/$dataset\
         model=graph/hopse_gin\
@@ -80,7 +80,7 @@ done
 wait
 
 gpus=(0 1)
-for i in {0..1}; do 
+for i in {0..1}; do
     CUDA=${gpus[$i]}  # Use the GPU number from our gpus array
     neighborhood=${neighborhoods[$i]} # Use the neighbourhood from our neighbourhoods array
 

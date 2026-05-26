@@ -4,7 +4,7 @@ project_name="rebuttal_cell_$dataset"
 # =====================
 # DATA
 # =====================
-DATA_SEEDS=(0 3 5 7 9) 
+DATA_SEEDS=(0 3 5 7 9)
 
 # =====================
 # MODEL PARAMETERS
@@ -42,14 +42,14 @@ PRETRAIN_MODELS_STR=$(IFS=,; echo "${PRETRAIN_MODELS[*]}")  # Convert to comma-s
 batch_sizes=(128 256)
 learning_rates=(0.001)
 neighborhoods=(
-    # adjacency 
+    # adjacency
     "['up_adjacency-0']"
     # incidence
     "['up_adjacency-0','down_incidence-1']"
 )
 # =====================
 gpus=(3 4 5 6 7)
-for i in {0..1}; do 
+for i in {0..1}; do
     CUDA=${gpus[$i]}  # Use the GPU number from our gpus array
     neighborhood=${neighborhoods[$i]} # Use the neighbourhood from our neighbourhoods array
 
@@ -80,7 +80,7 @@ done
 wait
 
 gpus=(3 4 5 6 7)
-for i in {0..1}; do 
+for i in {0..1}; do
     CUDA=${gpus[$i]}  # Use the GPU number from our gpus array
     neighborhood=${neighborhoods[$i]} # Use the neighbourhood from our neighbourhoods array
 

@@ -1,7 +1,7 @@
 # Dataset loader config
 loader:
   _target_: topobench.data.loaders.graph.MoleculeDatasetLoader
-  parameters: 
+  parameters:
     data_domain: graph
     data_type: AQSOL
     data_name: AQSOL
@@ -26,7 +26,6 @@ split_params:
 
 # Dataloader parameters
 dataloader_params:
-  batch_size: 10 
+  batch_size: 10
   num_workers: 0
   pin_memory: False
-

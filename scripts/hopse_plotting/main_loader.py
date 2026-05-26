@@ -43,9 +43,20 @@ from utils import (
 
 WANDB_ENTITY = "gbg141-hopse"
 
-MODELS = ["gin","gat", "gcn", "topotune", "hopse_m", "hopse_g", "sann", "sccnn", "cwn", "cccn"]
+MODELS = [
+    "gin",
+    "gat",
+    "gcn",
+    "topotune",
+    "hopse_m",
+    "hopse_g",
+    "sann",
+    "sccnn",
+    "cwn",
+    "cccn",
+]
 
-DATASETS = [    
+DATASETS = [
     "graph/MUTAG",
     "graph/PROTEINS",
     "graph/NCI1",
@@ -63,7 +74,9 @@ DEFAULT_OUTPUT_CSV = DEFAULT_WANDB_EXPORT_CSV
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Export W&B TopoBench sweeps to CSV.")
+    parser = argparse.ArgumentParser(
+        description="Export W&B TopoBench sweeps to CSV."
+    )
     parser.add_argument(
         "--output",
         "-o",
@@ -128,7 +141,9 @@ def main() -> None:
         df = dataframe_from_rows(rows)
         args.output.parent.mkdir(parents=True, exist_ok=True)
         df.to_csv(args.output, index=False)
-        print(f"Wrote {len(df)} rows x {len(df.columns)} columns -> {args.output}")
+        print(
+            f"Wrote {len(df)} rows x {len(df.columns)} columns -> {args.output}"
+        )
         return
 
     out_dir = args.output_dir or DEFAULT_WANDB_EXPORT_SHARD_DIR
@@ -152,7 +167,9 @@ def main() -> None:
             path = out_dir / f"{args.basename}__{stem}.csv"
             path.parent.mkdir(parents=True, exist_ok=True)
             df.to_csv(path, index=False)
-            print(f"    -> {len(df)} rows x {len(df.columns)} columns -> {path}")
+            print(
+                f"    -> {len(df)} rows x {len(df.columns)} columns -> {path}"
+            )
         return
 
     print(f"Collecting runs (sharded by dataset) into {out_dir} …")

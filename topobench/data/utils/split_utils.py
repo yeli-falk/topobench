@@ -21,6 +21,9 @@ def k_fold_split_fixed(labels, parameters, split_idx_list):
         Label tensor.
     parameters : DictConfig
         Configuration parameters.
+    split_idx_list : dict
+        Pre-computed split indices keyed by "train", "valid", and "test",
+        each containing one entry per fold.
 
     Returns
     -------

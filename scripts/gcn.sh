@@ -247,16 +247,16 @@ for combo in combinations:
                     is_transductive = True
         else:
             print(f'⚠️ WARNING: Could not find config at {yaml_path}', file=sys.stderr)
-        
+
         transductive_cache[dataset_val] = is_transductive
 
     if is_transductive:
-        # If this isn't the first batch size in the sweep list, skip it 
+        # If this isn't the first batch size in the sweep list, skip it
         # to avoid running the exact same bs=1 experiment multiple times.
         if current_bs != first_bs:
             skipped += 1
             continue
-        
+
         # Mutate the current combination to force batch_size to 1
         new_combo = []
         for (tag, key, val) in combo:

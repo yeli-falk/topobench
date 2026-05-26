@@ -53,7 +53,14 @@ class MoleculeDatasetLoader(AbstractLoader):
         return combined_dataset
 
     def _collapse_qm9_targets(self, dataset: QM9) -> None:
-        """Keep a single regression target; QM9 stores 19 columns in ``y``."""
+        """Keep a single regression target; QM9 stores 19 columns in ``y``.
+
+        Parameters
+        ----------
+        dataset : QM9
+            The QM9 dataset whose batched targets should be collapsed in-place
+            to a single regression target.
+        """
         target_idx = int(
             OmegaConf.select(self.parameters, "qm9_target_index", default=0)
         )

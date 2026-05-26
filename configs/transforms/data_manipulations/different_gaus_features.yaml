@@ -6,4 +6,3 @@ mean: 0
 std: 0.1
 num_features: ${dataset.parameters.num_features}
 dimensions: 0
-

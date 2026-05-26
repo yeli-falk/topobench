@@ -96,19 +96,19 @@ datasets=(
     # # Node classification datasets
     # "graph/hm-categories"
     # "graph/pokec-regions"
-    
+
     #"graph/web-topics"
     #"graph/web-fraud"
 
     # # Node regression datasets
     # graph/avazu-ctr # Need to figure out what is  --fraction_features_transform none quantile-transform-normal
-    
+
     # Uncomment 4 datasets below when graphland classification works fine
     #graph/city-roads-L
     #graph/city-roads-M
     #graph/twitch-views
     #graph/artnet-views
-    
+
     #graph/hm-prices
     #graph/web-traffic
 
@@ -128,7 +128,7 @@ datasets=(
     # "graph/NCI109"
     # "graph/REDDIT-BINARY"
     # "graph/ZINC"
-    
+
     # Graphland (idk if they actually correctly work yet, need to debug)
     "graph/tolokers-2"
     "graph/city-reviews"
@@ -139,8 +139,8 @@ datasets=(
 # --- Hyperparameters ---
 batch_sizes=(-1)
 lrs=(0.0001 0.0005 0.001)
-hidden_channels=(16 32 64 128) 
-num_layers=(1 2 4 8) 
+hidden_channels=(16 32 64 128)
+num_layers=(1 2 4 8)
 DROPOUTS=(0.0 0.1 0.2)
 # The Pivotal Parameter
 DATA_SEEDS=(0 3 5 7 9)
@@ -173,7 +173,7 @@ SWEEP_CONFIG=(
     # --- LEVEL 1: SLOWEST CHANGING (Outer Loops) ---
     "|model|${models[*]}"
     "|dataset|${datasets[*]}"
-    
+
     # --- LEVEL 2: HYPERPARAMETERS ---
     "L|model.backbone.num_layers|${num_layers[*]}"
     "lr|optimizer.parameters.lr|${lrs[*]}"
@@ -181,7 +181,7 @@ SWEEP_CONFIG=(
     "bs|dataset.dataloader_params.batch_size|${batch_sizes[*]}"
     "bdro|model.backbone.dropout|${DROPOUTS[*]}"
     "pdro|model.feature_encoder.proj_dropout|${DROPOUTS[*]}"
-    
+
     # --- LEVEL 3: FASTEST CHANGING (Inner Loop) ---
     # We keep seeds last so they run consecutively for every config.
     "seed|dataset.split_params.data_seed|${DATA_SEEDS[*]}"
@@ -227,7 +227,7 @@ for combo in combinations:
 
     # Build Args
     cmd_args = [f'{key}={val}' for (tag, key, val) in combo]
-    
+
     # Output: RUN_NAME ; ARG1 ARG2 ARG3
     print(f'{run_name};' + ' '.join(cmd_args))
 " "${SWEEP_CONFIG[@]}"
@@ -252,7 +252,7 @@ one_percent_step=1
 # Use process substitution < <(...) to feed the loop
 # We use ';' as the IFS delimiter because our python script outputs "Name;Args"
 while IFS=";" read -r col1 col2; do
-    
+
     # 6.1 Handle Header (Total Count)
     if [[ "$col1" == "TOTAL" ]]; then
         total_runs=$col2
@@ -261,7 +261,7 @@ while IFS=";" read -r col1 col2; do
             one_percent_step=$(( total_runs / 100 ))
         fi
         if [ "$one_percent_step" -eq 0 ]; then one_percent_step=1; fi
-        
+
         echo "► Total runs planned: $total_runs"
         echo "► Reporting progress every $one_percent_step runs (1%)"
         echo "----------------------------------------------------------"
@@ -271,7 +271,7 @@ while IFS=";" read -r col1 col2; do
     # 6.2 Parse Run Data
     run_name="$col1"
     dynamic_args_str="$col2"
-    
+
     # 6.3 Update Progress
     ((run_counter++))
     if (( run_counter % one_percent_step == 0 )); then
@@ -289,7 +289,7 @@ while IFS=";" read -r col1 col2; do
     while [ "$assigned_slot" -eq -1 ]; do
         for i in "${!gpus[@]}"; do
             pid="${slot_pids[$i]}"
-            
+
             # Slot is free if: PID is 0 (start) OR process is dead (kill -0 fails)
             if [ "$pid" -eq 0 ] || ! kill -0 "$pid" 2>/dev/null; then
                 assigned_slot=$i
@@ -306,7 +306,7 @@ while IFS=";" read -r col1 col2; do
     # 6.5 Prepare Command
     current_gpu=${gpus[$assigned_slot]}
     read -ra DYNAMIC_ARGS_ARRAY <<< "$dynamic_args_str" # Convert args string to array
-    
+
     # --- Extract dataset name for dynamic W&B project ---
     # We look for the argument that starts with 'dataset='
     dataset_val=""

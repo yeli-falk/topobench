@@ -8,4 +8,3 @@ echo "Done"
 echo "Normalizing columns with JSON data..."
 python scripts/results_processing/process_json.py
 echo
-

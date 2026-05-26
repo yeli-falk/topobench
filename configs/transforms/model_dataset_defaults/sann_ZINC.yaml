@@ -3,6 +3,6 @@ defaults:
   - liftings@_here_: ${get_required_lifting:${dataset},${model}}
   - data_manipulations@sann_encoding: precompute_khop_features
 
-one_hot_node_degree_features: 
+one_hot_node_degree_features:
   degrees_field: x
   features_field: x

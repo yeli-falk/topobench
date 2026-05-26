@@ -148,23 +148,23 @@ class TestCombinedEncodings:
             "HKFE": {"kernel_param_HKFE": (1, 5), "concat_to_x": False},
             "LapPE": {"max_pe_dim": 4, "concat_to_x": False},
         }
-        
+
         # PSE listed first, but FE should still run first
         transform = CombinedEncodings(encodings=["LapPE", "HKFE"], parameters=params)
-        
+
         # Compute HKFE alone for comparison
         from topobench.transforms.data_manipulations import CombinedFEs
         fe_only = CombinedFEs(
             encodings=["HKFE"],
             parameters={"HKFE": {"kernel_param_HKFE": (1, 5), "concat_to_x": False}}
         )
-        
+
         data1 = Data(x=self.x.clone(), edge_index=self.edge_index, num_nodes=self.num_nodes)
         data2 = Data(x=self.x.clone(), edge_index=self.edge_index, num_nodes=self.num_nodes)
-        
+
         result_combined = transform(data1)
         result_fe_only = fe_only(data2)
-        
+
         # HKFE should be identical in both cases (computed on original features)
         assert torch.allclose(result_combined.HKFE, result_fe_only.HKFE)
 
@@ -248,7 +248,7 @@ class TestSelectDestinationEncodings:
     def test_select_single_encoding(self):
         """Test selecting a single encoding."""
         transform = SelectDestinationEncodings(encodings=["HKFE"])
-        
+
         # Create data with expanded graph (dst + src nodes)
         data = Data(
             x=torch.randn(self.num_total, 5),
@@ -263,7 +263,7 @@ class TestSelectDestinationEncodings:
     def test_select_multiple_encodings(self):
         """Test selecting multiple encodings."""
         transform = SelectDestinationEncodings(encodings=["HKFE", "LapPE", "RWSE"])
-        
+
         data = Data(
             x=torch.randn(self.num_total, 5),
             HKFE=torch.randn(self.num_total, 4),
@@ -281,7 +281,7 @@ class TestSelectDestinationEncodings:
     def test_missing_encoding_raises(self):
         """Test that missing encoding raises ValueError."""
         transform = SelectDestinationEncodings(encodings=["HKFE", "MissingEnc"])
-        
+
         data = Data(
             x=torch.randn(self.num_total, 5),
             HKFE=torch.randn(self.num_total, 4),
@@ -293,7 +293,7 @@ class TestSelectDestinationEncodings:
     def test_preserves_correct_rows(self):
         """Test that correct rows (first n_dst) are preserved."""
         transform = SelectDestinationEncodings(encodings=["HKFE"])
-        
+
         # Create data with known values
         hkfe_data = torch.arange(self.num_total * 4).reshape(self.num_total, 4).float()
         data = Data(
@@ -310,7 +310,7 @@ class TestSelectDestinationEncodings:
     def test_x_none_handling(self):
         """Test handling when data.x is None."""
         transform = SelectDestinationEncodings(encodings=["HKFE"])
-        
+
         data = Data(
             x=None,
             HKFE=torch.randn(self.num_total, 4),
@@ -324,7 +324,7 @@ class TestSelectDestinationEncodings:
     def test_callable_interface(self):
         """Test that __call__ works correctly."""
         transform = SelectDestinationEncodings(encodings=["HKFE"])
-        
+
         data = Data(
             x=torch.randn(self.num_total, 5),
             HKFE=torch.randn(self.num_total, 4),

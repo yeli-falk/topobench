@@ -4,7 +4,7 @@ project_name="fix_gnn_rebuttal_cell_$dataset"
 # =====================
 # DATA
 # =====================
-DATA_SEEDS=(42 3 5 23 150) 
+DATA_SEEDS=(42 3 5 23 150)
 # 42,3,5,23,150
 # =====================
 # MODEL PARAMETERS
@@ -42,14 +42,14 @@ PRETRAIN_MODELS_STR=$(IFS=,; echo "${PRETRAIN_MODELS[*]}")  # Convert to comma-s
 batch_sizes=(128 256)
 learning_rates=(0.001)
 neighborhoods=(
-    # adjacency 
+    # adjacency
     "['up_adjacency-0']"
     # incidence
     "['up_adjacency-0','down_incidence-1']"
 )
 
 
-PE_TYPES=('LapPE') # 'RWSE' 'ElstaticPE' 'HKdiagSE' 
+PE_TYPES=('LapPE') # 'RWSE' 'ElstaticPE' 'HKdiagSE'
 model_types=('hopse_gin' 'hopse_gcn' 'hopse_gat')
 for model_type in ${model_types[*]}
 do
@@ -57,11 +57,11 @@ do
     do
         # TODO: fix bug with transforms.one_hot_node_degree_features.degrees_fields=x\
         gpus=(3 4)
-        for i in {0..1}; do 
+        for i in {0..1}; do
             CUDA=${gpus[$i]}  # Use the GPU number from our gpus array
             neighborhood=${neighborhoods[$i]} # Use the neighbourhood from our neighbourhoods array
 
-            
+
             python topobench/run.py\
                 dataset=graph/$dataset\
                 model=graph/$model_type\
@@ -89,7 +89,7 @@ do
         wait
 
         gpus=(3 4)
-        for i in {0..1}; do 
+        for i in {0..1}; do
             CUDA=${gpus[$i]}  # Use the GPU number from our gpus array
             neighborhood=${neighborhoods[$i]} # Use the neighbourhood from our neighbourhoods array
 
@@ -123,5 +123,5 @@ do
             done
         done
         wait
-done 
+done
 done

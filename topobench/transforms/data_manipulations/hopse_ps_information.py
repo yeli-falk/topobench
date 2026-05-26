@@ -56,7 +56,20 @@ class HOPSE_PE_Information(torch_geometric.transforms.BaseTransform):
         self.hidden_dim = self.parameters["dim_target_node"]
 
     def _data_to_device(self, data):
-        """Move all tensors in a Data object to self.device."""
+        """Move all tensors in a Data object to self.device.
+
+        Parameters
+        ----------
+        data : torch_geometric.data.Data
+            Input data whose tensor attributes should be moved to
+            ``self.device``. Non-tensor attributes are kept as-is.
+
+        Returns
+        -------
+        torch_geometric.data.Data
+            A new ``Data`` object with all tensor attributes on
+            ``self.device``.
+        """
         moved = {}
         for key, val in data.items():
             if isinstance(val, torch.Tensor):

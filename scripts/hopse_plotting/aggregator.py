@@ -36,7 +36,6 @@ import argparse
 from pathlib import Path
 
 import pandas as pd
-
 from utils import (
     DEFAULT_AGGREGATED_EXPORT_CSV,
     DEFAULT_WANDB_EXPORT_CSV,
@@ -56,7 +55,9 @@ def _print_seed_bucket_report(
     required_n_seeds: int | None,
 ) -> None:
     if report.empty:
-        print("Seed-count distribution: (no aggregated hyperparameter groups).")
+        print(
+            "Seed-count distribution: (no aggregated hyperparameter groups)."
+        )
         return
     if required_n_seeds is not None:
         print(
@@ -68,7 +69,9 @@ def _print_seed_bucket_report(
             "Seed-count distribution (hyperparameter groups per model+dataset); "
             "output CSV keeps all n_seeds (--keep-incomplete-seeds)."
         )
-    for (model, dataset), sub in report.groupby(["model", "dataset"], dropna=False):
+    for (model, dataset), sub in report.groupby(
+        ["model", "dataset"], dropna=False
+    ):
         print(f"\n  model={model!r}  dataset={dataset!r}")
         sub_sorted = sub.sort_values("n_seeds")
         for _, row in sub_sorted.iterrows():
@@ -92,21 +95,33 @@ def _print_seed_bucket_report(
 
 def _print_silent_failure_report(silent: pd.DataFrame) -> None:
     if silent is None or silent.empty:
-        print("\nSilent failures (no summary_test_best_rerun metrics): 0 raw runs dropped.")
+        print(
+            "\nSilent failures (no summary_test_best_rerun metrics): 0 raw runs dropped."
+        )
         return
-    tot = int(pd.to_numeric(silent["n_silent_failures"], errors="coerce").fillna(0).sum())
+    tot = int(
+        pd.to_numeric(silent["n_silent_failures"], errors="coerce")
+        .fillna(0)
+        .sum()
+    )
     print(
         f"\nSilent failures (no finite summary_test_best_rerun/* on raw row): "
         f"{tot} raw run(s) dropped before seed aggregation."
     )
-    print("  Per (model, dataset) counts (see terracotta 'silent fail' bar in seed distribution plots):")
+    print(
+        "  Per (model, dataset) counts (see terracotta 'silent fail' bar in seed distribution plots):"
+    )
     show = silent.sort_values("n_silent_failures", ascending=False).head(40)
     for _, row in show.iterrows():
         v = pd.to_numeric(row["n_silent_failures"], errors="coerce")
         n = int(v) if pd.notna(v) else 0
-        print(f"    model={row['model']!r}  dataset={row['dataset']!r}  dropped={n}")
+        print(
+            f"    model={row['model']!r}  dataset={row['dataset']!r}  dropped={n}"
+        )
     if len(silent) > len(show):
-        print(f"    ... and {len(silent) - len(show)} more (model, dataset) pair(s).")
+        print(
+            f"    ... and {len(silent) - len(show)} more (model, dataset) pair(s)."
+        )
 
 
 def _collect_input_paths(
@@ -145,7 +160,7 @@ def main() -> None:
         type=Path,
         default=None,
         metavar="PATH",
-        help=f"Per-run export CSV (repeat for multiple shards). If omitted, see --input-dir / default shard folder.",
+        help="Per-run export CSV (repeat for multiple shards). If omitted, see --input-dir / default shard folder.",
     )
     p.add_argument(
         "--input-dir",
@@ -204,7 +219,9 @@ def main() -> None:
     )
     args = p.parse_args()
     if not args.keep_incomplete_seeds and int(args.required_seeds) < 1:
-        p.error("--required-seeds must be >= 1 unless --keep-incomplete-seeds is set.")
+        p.error(
+            "--required-seeds must be >= 1 unless --keep-incomplete-seeds is set."
+        )
 
     input_dir = args.input_dir
     if args.input is None and input_dir is None:
@@ -224,9 +241,13 @@ def main() -> None:
         agg, report, silent = aggregate_wandb_export_csv(
             paths[0], args.output, required_n_seeds=req
         )
-        print(f"Wrote {len(agg)} aggregated rows x {len(agg.columns)} columns -> {args.output}")
+        print(
+            f"Wrote {len(agg)} aggregated rows x {len(agg.columns)} columns -> {args.output}"
+        )
     else:
-        agg, report, silent = aggregate_many_wandb_export_csvs(paths, args.output, required_n_seeds=req)
+        agg, report, silent = aggregate_many_wandb_export_csvs(
+            paths, args.output, required_n_seeds=req
+        )
         print(
             f"Combined {len(paths)} shard file(s) -> {len(agg)} aggregated rows x {len(agg.columns)} columns -> {args.output}"
         )

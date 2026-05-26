@@ -122,7 +122,7 @@ class TestCombinedPSEs:
             "LapPE": {"max_pe_dim": 2, "concat_to_x": True},
             "RWSE": {"max_pe_dim": 3, "concat_to_x": True}
         }
-        
+
         # Test LapPE first, then RWSE
         transform1 = CombinedPSEs(encodings=["LapPE", "RWSE"], parameters=params)
         data1 = Data(x=self.x.clone(), edge_index=self.edge_index, num_nodes=self.num_nodes)
@@ -240,7 +240,7 @@ class TestCombinedPSEs:
             "RWSE": {"max_pe_dim": 8, "concat_to_x": True}
         }
         transform = CombinedPSEs(encodings=["LapPE", "RWSE"], parameters=params)
-        
+
         # Create a larger graph
         num_nodes = 50
         num_edges = 150
@@ -314,7 +314,7 @@ class TestCombinedPSEs:
             "RWSE": {"max_pe_dim": 4, "concat_to_x": True}
         }
         transform = CombinedPSEs(encodings=["LapPE", "RWSE"], parameters=params)
-        
+
         edge_index = self.edge_index.cuda()
         x = self.x.cuda()
         data = Data(x=x, edge_index=edge_index, num_nodes=self.num_nodes)
@@ -332,7 +332,7 @@ class TestCombinedPSEs:
             "RWSE": {"max_pe_dim": 4, "concat_to_x": True}
         }
         transform = CombinedPSEs(encodings=["LapPE", "RWSE"], parameters=params)
-        
+
         y = torch.tensor([0, 1, 0])
         custom_attr = torch.tensor([10, 20, 30])
         data = Data(
@@ -370,10 +370,10 @@ class TestCombinedPSEs:
         assert hasattr(transformed1, "RWSE")
         assert hasattr(transformed2, "LapPE")
         assert hasattr(transformed2, "RWSE")
-        
+
         # RWSE should be deterministic
         assert torch.allclose(transformed1.RWSE, transformed2.RWSE)
-        
+
         # LapPE may vary due to numerical solver, but shapes should match
         assert transformed1.LapPE.shape == transformed2.LapPE.shape
 
@@ -455,7 +455,7 @@ class TestCombinedPSEs:
     ])
     def test_parametrized_single_encodings(self, encoding, params, expected_dim):
         """Parametrized test for single encodings.
-        
+
         Parameters
         ----------
         encoding : str
@@ -476,7 +476,7 @@ class TestCombinedPSEs:
     @pytest.mark.parametrize("max_pe_dim", [2, 4, 8, 16])
     def test_parametrized_dimensions(self, max_pe_dim):
         """Parametrized test for different PE dimensions.
-        
+
         Parameters
         ----------
         max_pe_dim : int
@@ -517,7 +517,7 @@ class TestCombinedPSEs:
                     edges.append([i, j])
         edge_index = torch.tensor(edges).t()
         x = torch.randn(4, 2)
-        
+
         params = {
             "LapPE": {"max_pe_dim": 4, "concat_to_x": True},
             "RWSE": {"max_pe_dim": 4, "concat_to_x": True}

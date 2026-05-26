@@ -1,8 +1,8 @@
 loader:
   _target_: topobench.data.loaders.MantraSimplicialDatasetLoader
-  parameters: 
+  parameters:
     data_domain: simplicial
-    data_type: topological 
+    data_type: topological
     data_name: MANTRA_name
     data_dir: ${paths.data_dir}/${dataset.loader.parameters.data_domain}/${dataset.loader.parameters.data_type}
     manifold_dim: 2
@@ -16,7 +16,7 @@ loader:
 
 # Data definition
 parameters:
-  # In the case of higher-order datasets we have multiple feature dimentions 
+  # In the case of higher-order datasets we have multiple feature dimentions
   num_features: [1,1,1] #[10,3,4]
   num_classes: 5 # In case of manifold_dim==2 num classes is 5 {'': 0, 'Klein bottle': 1, 'RP^2': 2, 'S^2': 3, 'T^2': 4,}
 
@@ -24,13 +24,13 @@ parameters:
   task: classification
   loss_type: cross_entropy
   monitor_metric: f1
-  task_level: graph 
+  task_level: graph
   data_seed: 0
   metrics: [accuracy, precision, recall, auroc, f1] # Available options: accuracy, auroc, precision, recall, f1
 
 #splits
 split_params:
-  learning_setting: inductive 
+  learning_setting: inductive
   data_split_dir: ${paths.data_dir}/data_splits/${dataset.loader.parameters.data_name}
   data_seed: 0
   split_type: stratified #'k-fold' # either "k-fold" or "random" strategies, stratified

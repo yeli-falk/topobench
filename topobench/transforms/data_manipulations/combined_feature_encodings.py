@@ -169,4 +169,18 @@ class SelectDestinationFEs(BaseTransform):
         return Data(**new_data)
 
     def __call__(self, data: Data, n_dst_nodes: int) -> Data:
+        r"""Apply the transform to ``data``.
+
+        Parameters
+        ----------
+        data : torch_geometric.data.Data
+            Input data containing the combined feature encodings to slice.
+        n_dst_nodes : int
+            Number of destination nodes to retain in each encoding.
+
+        Returns
+        -------
+        torch_geometric.data.Data
+            Data restricted to the first ``n_dst_nodes`` rows of each encoding.
+        """
         return self.forward(data, n_dst_nodes)

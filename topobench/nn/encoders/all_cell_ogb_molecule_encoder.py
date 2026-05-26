@@ -115,6 +115,9 @@ class BaseMoleculeEncoder(torch.nn.Module):
         Dimension of input features.
     out_channels : int
         Dimensions of output features.
+    cell_level : int
+        Cell rank to encode. Use 0 for atom-level (uses ``AtomEncoder``) or
+        1 for bond-level (uses ``BondEncoder``).
     dropout : float, optional
         Percentage of channels to discard between the two linear layers (default: 0).
     """

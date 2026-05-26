@@ -57,15 +57,15 @@ class TestCollateFunction:
         hydra.core.global_hydra.GlobalHydra.instance().clear()
 
     def test_lift_features(self):
-        """Test the collate funciton.
+        """Test the collate function.
 
-        To test the collate function we use the TBDataloader class to create a dataloader that uses the collate function. 
-        We then first check that the batched data has the expected shape. We then convert the batched data back to a list and check that the data in the list is the same as the original data.
+        To test the collate function we use the TBDataloader class to create a dataloader that uses the collate function.
+        We first check that the batched data has the expected shape. We then convert the batched data back to a list and check that the data in the list is the same as the original data.
         """
 
         def check_shape(batch, elems, key):
             """Check that the batched data has the expected shape.
-            
+
             Parameters
             ----------
             batch : dict
@@ -103,7 +103,7 @@ class TestCollateFunction:
 
         def check_separation(matrix, n_elems_0_row, n_elems_0_col):
             """Check that the matrix is separated into two parts diagonally concatenated.
-            
+
             Parameters
             ----------
             matrix : torch.Tensor
@@ -118,7 +118,7 @@ class TestCollateFunction:
 
         def check_values(matrix, m1, m2):
             """Check that the values in the matrix are the same as the values in the original data.
-            
+
             Parameters
             ----------
             matrix : torch.Tensor

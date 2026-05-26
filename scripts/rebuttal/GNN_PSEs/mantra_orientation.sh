@@ -4,7 +4,7 @@ project_name="rebuttal_GNN_$dataset"
 # =====================
 # DATA
 # =====================
-DATA_SEEDS=(0 3 5 7 9) 
+DATA_SEEDS=(0 3 5 7 9)
 
 # =====================
 # MODEL PARAMETERS
@@ -51,7 +51,7 @@ for i in {0..5}; do
     neighborhood=${neighborhoods[0]} # Use the neighbourhood from our neighbourhoods array
     pe_type=${PE_TYPES[$i]} # Use the neighbourhood from our neighbourhoods array
 
-    
+
     python topobench/run.py\
         dataset=simplicial/$dataset\
         model=graph/hopse_gin\
@@ -77,7 +77,7 @@ for i in {0..5}; do
 done
 wait
 
-for i in {0..5}; do 
+for i in {0..5}; do
     neighborhood=${neighborhoods[0]} # Use the neighbourhood from our neighbourhoods array
     pe_type=${PE_TYPES[$i]} # Use the neighbourhood from our neighbourhoods array
 

@@ -18,7 +18,7 @@ column layout as ``table_generator`` compact mode:
 
 Time ``.tex`` tables (runtime + per-epoch): default **bold** = lowest mean in that **dataset
 column** within the same **domain band**; **blue** = not significantly different from that
-within-domain minimum (two-sided $Z$ at 95\\,\\%, SE $= \\sigma/\\sqrt{n\_\\mathrm{seeds}}$).
+within-domain minimum (two-sided $Z$ at 95\\,\\%, SE $= \\sigma/\\sqrt{n\\_\\mathrm{seeds}}$).
 Dataset column headers omit performance $\\uparrow$/$\\downarrow$ markers (unlike the main
 rerun performance table). The extra ``rerun_time_train_epoch_bold_global.tex`` uses the same
 per-epoch cells but bolds the minimum **across all models** in each column.
@@ -45,14 +45,15 @@ from __future__ import annotations
 
 import argparse
 import math
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 import numpy as np
 import pandas as pd
-
 from table_generator import (
     TABLES_DIR,
+    TRANSDUCTIVE_GRAPH_SET,
     _finite,
     _latex_cell_body,
     _latex_short_dataset_label,
@@ -72,16 +73,16 @@ from table_generator import (
     optimization_mode_for_metric_tail,
     partition_specs_graph_simplicial,
     simplicial_submodel_table_rows,
-    TRANSDUCTIVE_GRAPH_SET,
 )
 from utils import (
     CSV_DIR,
     MANTRA_BETTI_F1_TAILS,
     MANTRA_BETTI_HYDRA_DATASET,
     MONITOR_METRIC_COLUMN,
+    PLOTS_DIR,
     SEED_COLUMN,
     SUMMARY_COLUMN_PREFIX,
-    PLOTS_DIR,
+    _unwrap_wandb_value,
     aggregate_wandb_export_by_seed,
     build_seed_bucket_report,
     coalesce_seed_agg_wall_runtime_mean_std,
@@ -92,7 +93,6 @@ from utils import (
     list_seed_aggregatable_summary_columns,
     metric_name_tail,
     run_to_row,
-    _unwrap_wandb_value,
 )
 
 # Match ``best_rerun_sh_generator.py`` defaults.
@@ -108,7 +108,9 @@ SUMMARY_EPOCH_STD = f"{SUMMARY_COLUMN_PREFIX}AvgTime/train_epoch_std"
 PARAM_COUNT_COL = "model.params.total"
 DEFAULT_SCATTER_DIR = PLOTS_DIR / "rerun_timing_vs_params"
 # Single scatter facet for MANTRA Betti (same run / timing for β₁ and β₂ columns).
-MANTRA_BETTI_SCATTER_DATASET_H = f"{MANTRA_BETTI_HYDRA_DATASET}__scatter_f1joint"
+MANTRA_BETTI_SCATTER_DATASET_H = (
+    f"{MANTRA_BETTI_HYDRA_DATASET}__scatter_f1joint"
+)
 SCATTER_MAX_COLS = 4
 
 
@@ -205,7 +207,9 @@ def collect_runs_single_project(
     return rows
 
 
-def _summary_metric_columns_for_rerun_export(df: pd.DataFrame) -> list[str] | None:
+def _summary_metric_columns_for_rerun_export(
+    df: pd.DataFrame,
+) -> list[str] | None:
     cols = list_seed_aggregatable_summary_columns(df)
     extra: list[str] = []
     if SUMMARY_RUNTIME in df.columns:
@@ -215,9 +219,13 @@ def _summary_metric_columns_for_rerun_export(df: pd.DataFrame) -> list[str] | No
     return sorted(set(cols) | set(extra))
 
 
-def _print_seed_bucket_report(report: pd.DataFrame, *, required_n_seeds: int | None) -> None:
+def _print_seed_bucket_report(
+    report: pd.DataFrame, *, required_n_seeds: int | None
+) -> None:
     if report.empty:
-        print("Seed-count distribution: (no aggregated hyperparameter groups).")
+        print(
+            "Seed-count distribution: (no aggregated hyperparameter groups)."
+        )
         return
     if required_n_seeds is not None:
         print(
@@ -228,7 +236,9 @@ def _print_seed_bucket_report(report: pd.DataFrame, *, required_n_seeds: int | N
         print(
             "Seed-count distribution; output CSV keeps all n_seeds (--keep-incomplete-seeds)."
         )
-    for (model, dataset), sub in report.groupby(["model", "dataset"], dropna=False):
+    for (model, dataset), sub in report.groupby(
+        ["model", "dataset"], dropna=False
+    ):
         print(f"\n  model={model!r}  dataset={dataset!r}")
         for _, row in sub.sort_values("n_seeds").iterrows():
             k = row["n_seeds"]
@@ -251,9 +261,15 @@ def _print_seed_bucket_report(report: pd.DataFrame, *, required_n_seeds: int | N
 
 def _print_silent_failure_report(silent: pd.DataFrame) -> None:
     if silent is None or silent.empty:
-        print("\nSilent failures (no summary_test_best_rerun metrics): 0 raw runs dropped.")
+        print(
+            "\nSilent failures (no summary_test_best_rerun metrics): 0 raw runs dropped."
+        )
         return
-    tot = int(pd.to_numeric(silent["n_silent_failures"], errors="coerce").fillna(0).sum())
+    tot = int(
+        pd.to_numeric(silent["n_silent_failures"], errors="coerce")
+        .fillna(0)
+        .sum()
+    )
     print(
         f"\nSilent failures (no finite summary_test_best_rerun/* on raw row): "
         f"{tot} raw run(s) dropped before seed aggregation."
@@ -309,7 +325,9 @@ def collect_runtime_stats_from_agg_winners(
                     "tail": fi_tail,
                     "mode": "max",
                     "monitor_raw": str(monitor_val).strip(),
-                    "n_seeds": int(pd.to_numeric(w.get("n_seeds"), errors="coerce") or 0),
+                    "n_seeds": int(
+                        pd.to_numeric(w.get("n_seeds"), errors="coerce") or 0
+                    ),
                 }
             continue
 
@@ -322,7 +340,9 @@ def collect_runtime_stats_from_agg_winners(
             "tail": tail,
             "mode": mode,
             "monitor_raw": str(monitor_val).strip(),
-            "n_seeds": int(pd.to_numeric(w.get("n_seeds"), errors="coerce") or 0),
+            "n_seeds": int(
+                pd.to_numeric(w.get("n_seeds"), errors="coerce") or 0
+            ),
         }
     return out
 
@@ -382,7 +402,9 @@ def collect_epoch_time_stats_min_timing_std(
         ds_raw = str(dataset_raw).strip()
         dataset = hydra_dataset_key_from_loader_identity(ds_raw)
 
-        row = _pick_raw_row_min_epoch_timing_std(sub, mean_col=mean_col, std_col=std_col)
+        row = _pick_raw_row_min_epoch_timing_std(
+            sub, mean_col=mean_col, std_col=std_col
+        )
         if row is None:
             continue
 
@@ -405,7 +427,9 @@ def collect_epoch_time_stats_min_timing_std(
                     "val_mean": vm,
                     "tail": fi_tail,
                     "mode": "max",
-                    "monitor_raw": str(row.get(MONITOR_METRIC_COLUMN, "") or "").strip(),
+                    "monitor_raw": str(
+                        row.get(MONITOR_METRIC_COLUMN, "") or ""
+                    ).strip(),
                     "n_seeds": 1,
                 }
             continue
@@ -519,9 +543,15 @@ def build_rerun_metric_table_plain(
         if not st or not _finite(st.get("test_mean", float("nan"))):
             return "-"
         mu = float(st["test_mean"])
-        sd = float(st["test_std"]) if _finite(st.get("test_std")) else float("nan")
+        sd = (
+            float(st["test_std"])
+            if _finite(st.get("test_std"))
+            else float("nan")
+        )
         n_raw = st.get("n_seeds", 0)
-        n_seeds = int(pd.to_numeric(n_raw, errors="coerce")) if _finite(n_raw) else 0
+        n_seeds = (
+            int(pd.to_numeric(n_raw, errors="coerce")) if _finite(n_raw) else 0
+        )
         se = _sem(sd, max(n_seeds, 0))
 
         if comparison_scope == "global":
@@ -544,7 +574,13 @@ def build_rerun_metric_table_plain(
                 mus.append(float(t["test_mean"]))
         if not mus:
             return _latex_cell_body(
-                mu, sd, se, is_best=False, blue_tie=False, decimals=decimals, scale=1.0
+                mu,
+                sd,
+                se,
+                is_best=False,
+                blue_tie=False,
+                decimals=decimals,
+                scale=1.0,
             )
 
         best_val = min(mus)
@@ -568,7 +604,13 @@ def build_rerun_metric_table_plain(
 
         blue = not is_best and _not_sig_diff_from_best(mu, se, ref_mu, ref_se)
         return _latex_cell_body(
-            mu, sd, se, is_best=is_best, blue_tie=blue, decimals=decimals, scale=1.0
+            mu,
+            sd,
+            se,
+            is_best=is_best,
+            blue_tie=blue,
+            decimals=decimals,
+            scale=1.0,
         )
 
     lines: list[str] = []
@@ -593,7 +635,9 @@ def build_rerun_metric_table_plain(
         cmid_parts = []
         for title, i0, i1 in group_ranges:
             span = i1 - i0 + 1
-            multicols.append(f"\\multicolumn{{{span}}}{{c}}{{\\mbox{{{title}}}}}")
+            multicols.append(
+                f"\\multicolumn{{{span}}}{{c}}{{\\mbox{{{title}}}}}"
+            )
             cmid_parts.append(f"\\cmidrule(lr){{{3 + i0}-{3 + i1}}}")
         lines.append("  &  & " + " & ".join(multicols) + " \\\\")
         lines.append(" ".join(cmid_parts))
@@ -643,7 +687,11 @@ def build_rerun_timing_vs_params_frame(agg: pd.DataFrame) -> pd.DataFrame:
     with parameter count, wall runtime mean±std over seeds, and train-epoch mean mean±std
     over seeds (seed-aggregated CSV columns).
     """
-    from plot_topology_timing import _domain_from_model, _pretty_legend_label, enrich_submodel_columns
+    from plot_topology_timing import (
+        _domain_from_model,
+        _pretty_legend_label,
+        enrich_submodel_columns,
+    )
 
     if agg.empty or "model" not in agg.columns:
         return pd.DataFrame()
@@ -716,11 +764,17 @@ def build_rerun_timing_vs_params_frame(agg: pd.DataFrame) -> pd.DataFrame:
 
 
 def _expanded_hydra_paths_in_table_order() -> list[str]:
-    return [p for p, _ in expand_mantra_betti_specs(_specs_from_loader_paths())]
+    return [
+        p for p, _ in expand_mantra_betti_specs(_specs_from_loader_paths())
+    ]
 
 
 def _dataset_order_cell() -> list[str]:
-    return [p for p in _expanded_hydra_paths_in_table_order() if p.startswith("cell/")]
+    return [
+        p
+        for p in _expanded_hydra_paths_in_table_order()
+        if p.startswith("cell/")
+    ]
 
 
 def _dataset_order_simplicial_graph_benchmarks() -> list[str]:
@@ -735,8 +789,14 @@ def _dataset_order_simplicial_mantra() -> list[str]:
     """MANTRA paths in table order; Betti ``#f1-1`` / ``#f1-2`` replaced by one combined facet."""
     from plot_topology_timing import _is_mantra_simplicial_dataset
 
-    raw = [p for p in _expanded_hydra_paths_in_table_order() if _is_mantra_simplicial_dataset(p)]
-    betti_cols = {f"{MANTRA_BETTI_HYDRA_DATASET}#{t}" for t in MANTRA_BETTI_F1_TAILS}
+    raw = [
+        p
+        for p in _expanded_hydra_paths_in_table_order()
+        if _is_mantra_simplicial_dataset(p)
+    ]
+    betti_cols = {
+        f"{MANTRA_BETTI_HYDRA_DATASET}#{t}" for t in MANTRA_BETTI_F1_TAILS
+    }
     out: list[str] = []
     inserted_joint = False
     for p in raw:
@@ -759,11 +819,15 @@ def _filter_scatter_cell(df: pd.DataFrame) -> pd.DataFrame:
     return df.loc[df["model"].astype(str).str.startswith("cell/")].copy()
 
 
-def _filter_scatter_simplicial_graph_benchmarks(df: pd.DataFrame) -> pd.DataFrame:
+def _filter_scatter_simplicial_graph_benchmarks(
+    df: pd.DataFrame,
+) -> pd.DataFrame:
     from plot_topology_timing import _is_mantra_simplicial_dataset
 
     m = df["model"].astype(str).str.startswith("simplicial/")
-    not_mantra_ds = ~df["dataset_h"].astype(str).map(_is_mantra_simplicial_dataset)
+    not_mantra_ds = ~df["dataset_h"].astype(str).map(
+        _is_mantra_simplicial_dataset
+    )
     return df.loc[m & not_mantra_ds].copy()
 
 
@@ -792,7 +856,6 @@ def emit_rerun_scatter_timing_vs_params(
     import matplotlib.pyplot as plt
     import numpy as np
     from matplotlib.patches import Patch
-
     from plot_topology_timing import (
         FACET_FS_LEGEND,
         FACET_FS_TICK,
@@ -809,7 +872,9 @@ def emit_rerun_scatter_timing_vs_params(
     )
 
     sub_mean = pd.to_numeric(plot_df[y_mean_col], errors="coerce")
-    plot_df = plot_df.loc[sub_mean.notna() & np.isfinite(sub_mean.to_numpy())].copy()
+    plot_df = plot_df.loc[
+        sub_mean.notna() & np.isfinite(sub_mean.to_numpy())
+    ].copy()
     if plot_df.empty:
         print(f"  (skip empty scatter) {stem}.png")
         return
@@ -819,7 +884,9 @@ def emit_rerun_scatter_timing_vs_params(
     dss.extend(sorted(present - set(dss)))
 
     dom = _infer_plot_domain(plot_df)
-    row_keys = _ordered_model_row_keys(plot_df, sorted(plot_df["model_row_key"].astype(str).unique()), dom)
+    row_keys = _ordered_model_row_keys(
+        plot_df, sorted(plot_df["model_row_key"].astype(str).unique()), dom
+    )
     color_of = build_row_key_color_map(plot_df, row_keys, domain=dom)
 
     n_d = len(dss)
@@ -840,7 +907,9 @@ def emit_rerun_scatter_timing_vs_params(
         sharey=False,
         constrained_layout=True,
     )
-    fig.set_constrained_layout_pads(w_pad=0.02, h_pad=0.05, wspace=None, hspace=None)
+    fig.set_constrained_layout_pads(
+        w_pad=0.02, h_pad=0.05, wspace=None, hspace=None
+    )
     ax_arr = np.atleast_2d(axs)
     axes_flat: list[Any] = list(ax_arr.ravel())
 
@@ -864,10 +933,16 @@ def emit_rerun_scatter_timing_vs_params(
             m = sub.loc[sub["model_row_key"].astype(str) == mk]
             if m.empty:
                 continue
-            xi = pd.to_numeric(m["param_count"], errors="coerce").to_numpy(dtype=float)
-            yi = pd.to_numeric(m[y_mean_col], errors="coerce").to_numpy(dtype=float)
+            xi = pd.to_numeric(m["param_count"], errors="coerce").to_numpy(
+                dtype=float
+            )
+            yi = pd.to_numeric(m[y_mean_col], errors="coerce").to_numpy(
+                dtype=float
+            )
             if y_std_col and y_std_col in m.columns:
-                ei = pd.to_numeric(m[y_std_col], errors="coerce").to_numpy(dtype=float)
+                ei = pd.to_numeric(m[y_std_col], errors="coerce").to_numpy(
+                    dtype=float
+                )
                 ei = np.where(np.isfinite(ei) & (ei >= 0), ei, 0.0)
             else:
                 ei = np.zeros_like(yi, dtype=float)
@@ -911,8 +986,15 @@ def emit_rerun_scatter_timing_vs_params(
         ax.set_xlabel("")
         if i % n_cols == 0:
             ax.set_ylabel(y_label, fontsize=fs_axis_label)
-        ax.set_title(_scatter_panel_title(ds), fontsize=fs_panel_title, fontweight="bold", pad=8)
-        ax.tick_params(axis="both", which="major", labelsize=fs_tick, width=1.05, length=5)
+        ax.set_title(
+            _scatter_panel_title(ds),
+            fontsize=fs_panel_title,
+            fontweight="bold",
+            pad=8,
+        )
+        ax.tick_params(
+            axis="both", which="major", labelsize=fs_tick, width=1.05, length=5
+        )
         ax.grid(True, linestyle=":", alpha=0.55)
         ax.set_axisbelow(True)
 
@@ -922,7 +1004,9 @@ def emit_rerun_scatter_timing_vs_params(
     model_tick_labels: list[str] = []
     for mk in row_keys:
         subm = plot_df.loc[plot_df["model_row_key"].astype(str) == mk]
-        model_tick_labels.append(str(subm["legend_label"].iloc[0]) if len(subm) else mk)
+        model_tick_labels.append(
+            str(subm["legend_label"].iloc[0]) if len(subm) else mk
+        )
 
     legend_handles = [
         Patch(
@@ -965,7 +1049,11 @@ def main() -> None:
         description="W&B best_runs_rerun: export, seed-aggregate, emit LaTeX tables (perf + times)."
     )
     p.add_argument("--entity", default=DEFAULT_WANDB_ENTITY, help="W&B entity")
-    p.add_argument("--project", default=DEFAULT_WANDB_PROJECT, help="Single W&B project for all reruns")
+    p.add_argument(
+        "--project",
+        default=DEFAULT_WANDB_PROJECT,
+        help="Single W&B project for all reruns",
+    )
     p.add_argument(
         "--run-state",
         default="finished",
@@ -1004,7 +1092,12 @@ def main() -> None:
         default=TABLES_DIR,
         help=f"Directory for emitted .tex files (default: {TABLES_DIR})",
     )
-    p.add_argument("--decimals", type=int, default=2, help="Decimal places in time tables (default: 2)")
+    p.add_argument(
+        "--decimals",
+        type=int,
+        default=2,
+        help="Decimal places in time tables (default: 2)",
+    )
     p.add_argument(
         "--no-scale-fractions",
         action="store_true",
@@ -1040,7 +1133,9 @@ def main() -> None:
         run_state = str(args.run_state)
 
     if not args.keep_incomplete_seeds and int(args.required_seeds) < 1:
-        p.error("--required-seeds must be >= 1 unless --keep-incomplete-seeds is set.")
+        p.error(
+            "--required-seeds must be >= 1 unless --keep-incomplete-seeds is set."
+        )
 
     verbose = not args.quiet
     print(f"Entity: {args.entity}  project: {args.project!r}")
@@ -1054,7 +1149,9 @@ def main() -> None:
         print(f"Wrote raw export: {args.write_raw_csv} ({len(df_raw)} rows)")
 
     sm_cols = _summary_metric_columns_for_rerun_export(df_raw)
-    agg, silent = aggregate_wandb_export_by_seed(df_raw, summary_metric_columns=sm_cols)
+    agg, silent = aggregate_wandb_export_by_seed(
+        df_raw, summary_metric_columns=sm_cols
+    )
     report = build_seed_bucket_report(agg)
     req = None if args.keep_incomplete_seeds else int(args.required_seeds)
     if req is not None:
@@ -1062,7 +1159,9 @@ def main() -> None:
     agg = agg.fillna("")
     args.output_csv.parent.mkdir(parents=True, exist_ok=True)
     agg.to_csv(args.output_csv, index=False)
-    print(f"Wrote seed-aggregated CSV: {args.output_csv} ({len(agg)} rows x {len(agg.columns)} cols)")
+    print(
+        f"Wrote seed-aggregated CSV: {args.output_csv} ({len(agg)} rows x {len(agg.columns)} cols)"
+    )
 
     _print_silent_failure_report(silent)
     _print_seed_bucket_report(report, required_n_seeds=req)
@@ -1099,7 +1198,11 @@ def main() -> None:
     stats_rt_sub = collect_runtime_stats_from_agg_winners(
         agg_rt, mean_col=_COAL_WALL_MEAN, std_col=_COAL_WALL_STD
     )
-    stats_rt_compact = collapse_gnn_submodel_rows_to_base(stats_rt_sub) if stats_rt_sub else {}
+    stats_rt_compact = (
+        collapse_gnn_submodel_rows_to_base(stats_rt_sub)
+        if stats_rt_sub
+        else {}
+    )
 
     cap_rt = (
         "End-to-end time (without preprocessing) in seconds (mean $\\pm$ std over seeds). "
@@ -1122,13 +1225,19 @@ def main() -> None:
         stats_ep_sub = collect_epoch_time_stats_min_timing_std(
             df_raw,
             mean_col=SUMMARY_EPOCH_MEAN,
-            std_col=SUMMARY_EPOCH_STD if SUMMARY_EPOCH_STD in df_raw.columns else "",
+            std_col=SUMMARY_EPOCH_STD
+            if SUMMARY_EPOCH_STD in df_raw.columns
+            else "",
         )
         # Match compact GNN collapse to the performance table (val from seed-aggregated picks).
         for k in list(stats_ep_sub.keys()):
             if k in stats_perf:
                 stats_ep_sub[k]["val_mean"] = float(stats_perf[k]["val_mean"])
-    stats_ep_compact = collapse_gnn_submodel_rows_to_base(stats_ep_sub) if stats_ep_sub else {}
+    stats_ep_compact = (
+        collapse_gnn_submodel_rows_to_base(stats_ep_sub)
+        if stats_ep_sub
+        else {}
+    )
 
     cap_ep = (
         "Train seconds per epoch (mean $\\pm$ std) "
@@ -1192,19 +1301,34 @@ def main() -> None:
     if args.scatter_plots:
         scatter_df = build_rerun_timing_vs_params_frame(agg)
         if scatter_df.empty:
-            print("Scatter plots: no data (empty aggregate or could not build best-val picks).")
+            print(
+                "Scatter plots: no data (empty aggregate or could not build best-val picks)."
+            )
         else:
             _pc = pd.to_numeric(scatter_df["param_count"], errors="coerce")
-            scatter_df = scatter_df.loc[_pc.notna() & np.isfinite(_pc.to_numpy(dtype=float))].copy()
+            scatter_df = scatter_df.loc[
+                _pc.notna() & np.isfinite(_pc.to_numpy(dtype=float))
+            ].copy()
             if scatter_df.empty:
                 print("Scatter plots: no rows with finite parameter count.")
             else:
                 wall_m, wall_s = "wall_mean", "wall_std"
                 ep_m, ep_s = "epoch_mean", "epoch_std"
                 scatter_bands: tuple[
-                    tuple[str, list[str], Callable[[pd.DataFrame], pd.DataFrame], str], ...
+                    tuple[
+                        str,
+                        list[str],
+                        Callable[[pd.DataFrame], pd.DataFrame],
+                        str,
+                    ],
+                    ...,
                 ] = (
-                    ("cell", _dataset_order_cell(), _filter_scatter_cell, "Cell"),
+                    (
+                        "cell",
+                        _dataset_order_cell(),
+                        _filter_scatter_cell,
+                        "Cell",
+                    ),
                     (
                         "simplicial_graph",
                         _dataset_order_simplicial_graph_benchmarks(),
@@ -1218,14 +1342,25 @@ def main() -> None:
                         "Simplicial (MANTRA)",
                     ),
                 )
-                for stem_suffix, ds_order, filt_fn, title_suffix in scatter_bands:
+                for (
+                    stem_suffix,
+                    ds_order,
+                    filt_fn,
+                    title_suffix,
+                ) in scatter_bands:
                     sub = filt_fn(scatter_df)
                     if sub.empty:
-                        print(f"Scatter plots: skip band {stem_suffix!r} (no rows after filter).")
+                        print(
+                            f"Scatter plots: skip band {stem_suffix!r} (no rows after filter)."
+                        )
                         continue
-                    if wall_m in sub.columns and sub[wall_m].notna().any() and np.isfinite(
-                        sub[wall_m].to_numpy(dtype=float)
-                    ).any():
+                    if (
+                        wall_m in sub.columns
+                        and sub[wall_m].notna().any()
+                        and np.isfinite(
+                            sub[wall_m].to_numpy(dtype=float)
+                        ).any()
+                    ):
                         emit_rerun_scatter_timing_vs_params(
                             sub,
                             y_mean_col=wall_m,
@@ -1243,9 +1378,11 @@ def main() -> None:
                             f"Scatter plots: skip wall-clock figure for band {stem_suffix!r} "
                             "(no finite wall_mean)."
                         )
-                    if ep_m in sub.columns and sub[ep_m].notna().any() and np.isfinite(
-                        sub[ep_m].to_numpy(dtype=float)
-                    ).any():
+                    if (
+                        ep_m in sub.columns
+                        and sub[ep_m].notna().any()
+                        and np.isfinite(sub[ep_m].to_numpy(dtype=float)).any()
+                    ):
                         emit_rerun_scatter_timing_vs_params(
                             sub,
                             y_mean_col=ep_m,

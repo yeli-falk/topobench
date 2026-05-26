@@ -5,7 +5,7 @@ project_name="rebutal_HOPSE_M_simplicial_$dataset"
 # =====================
 # DATA
 # =====================
-DATA_SEEDS=(0 3 5 7 9) 
+DATA_SEEDS=(0 3 5 7 9)
 
 # =====================
 # MODEL PARAMETERS
@@ -36,7 +36,7 @@ BATCH_SIZES_STR=$(IFS=,; echo "${BATCH_SIZES[*]}")
 # PARAMETERS OVER WHICH WE PERFORM PARALLEL RUNS
 # =====================
 neighborhoods=(
-    # adjacency 
+    # adjacency
     "['up_adjacency-0']"
     "['up_adjacency-0','up_adjacency-1']"
     "['up_adjacency-0','up_adjacency-1','down_adjacency-2']"
@@ -45,19 +45,19 @@ neighborhoods=(
     "['up_adjacency-0','up_incidence-0','up_incidence-1']"
     "['up_adjacency-0','down_incidence-1','down_incidence-2']"
     "['up_adjacency-0','up_incidence-0','up_incidence-1','down_incidence-1','down_incidence-2']"
-    
+
     # all together
     "['up_adjacency-0','up_adjacency-1','down_adjacency-1','down_adjacency-2','up_incidence-0','up_incidence-1','down_incidence-1','down_incidence-2']"
-    
+
     # We have 8th gpu hence we can add one more neighbourhood
     "['up_adjacency-0','up_adjacency-1','2-up_adjacency-0','down_adjacency-1','down_adjacency-2','2-down_adjacency-2']"
 )
 
 gpus=(0 1 2 3 4 5 6 7)
-for i in {0..7}; do 
+for i in {0..7}; do
     CUDA=${gpus[$i]}  # Use the GPU number from our gpus array
     neighborhood=${neighborhoods[$i]} # Use the neighbourhood from our neighbourhoods array
-        
+
     python topobench/run.py\
         dataset=graph/$dataset\
         model=simplicial/hopse_m\
@@ -85,7 +85,7 @@ done
 wait
 
 gpus=(0 1 2 3 4 5 6 7)
-for i in {0..7}; do 
+for i in {0..7}; do
     CUDA=${gpus[$i]}  # Use the GPU number from our gpus array
     neighborhood=${neighborhoods[$i]} # Use the neighbourhood from our neighbourhoods array
 
@@ -93,7 +93,7 @@ for i in {0..7}; do
     do
         for batch_size in ${BATCH_SIZES[*]}
         do
-        
+
             python topobench/run.py\
                 dataset=graph/$dataset\
                 model=simplicial/hopse_m\

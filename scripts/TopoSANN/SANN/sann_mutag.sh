@@ -4,7 +4,7 @@ project_name="main_exp_SANN_$dataset"
 # =====================
 # DATA
 # =====================
-DATA_SEEDS=(0 3 5 7 9) 
+DATA_SEEDS=(0 3 5 7 9)
 
 # =====================
 # MODEL PARAMETERS
@@ -44,7 +44,7 @@ BATCH_SIZES_STR=$(IFS=,; echo "${BATCH_SIZES[*]}")
 
 for max_hop in ${MAX_HOPS[*]}
 do
-        
+
     python topobench/run.py\
         dataset=graph/$dataset\
         model=simplicial/sann\
@@ -65,16 +65,16 @@ do
         transforms.hopse_encoding.max_hop=$max_hop\
         transforms.hopse_encoding.complex_dim=3\
         --multirun &
-        
+
 done
 
-wait 
+wait
 
 gpus=(0 1 2 3 4 5 6 7)
-for i in {0..4}; do 
+for i in {0..4}; do
     CUDA=${gpus[$i]}  # Use the GPU number from our gpus array
     data_seed=${DATA_SEEDS[$i]} # Use the neighbourhood from our neighbourhoods array
-    
+
     for max_hop in ${MAX_HOPS[*]}
     do
         for batch_size in ${BATCH_SIZES[*]}
@@ -103,4 +103,3 @@ for i in {0..4}; do
         done
     done
 done
-

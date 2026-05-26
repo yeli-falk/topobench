@@ -4,7 +4,7 @@ project_name="fix_gnn_rebuttal_cell_$dataset"
 # =====================
 # DATA
 # =====================
-DATA_SEEDS=(0 3 5 7 9) 
+DATA_SEEDS=(0 3 5 7 9)
 # 42,3,5,23,150
 # =====================
 # MODEL PARAMETERS
@@ -50,10 +50,10 @@ neighborhoods=(
 model_types=('hopse_gin' 'hopse_gcn' 'hopse_gat')
 for model_type in ${model_types[*]}
 do
-    for i in {0..1}; do 
+    for i in {0..1}; do
         neighborhood=${neighborhoods[$i]} # Use the neighbourhood from our neighbourhoods array
 
-        
+
         python topobench/run.py\
             dataset=graph/$dataset\
             model=graph/$model_type\
@@ -80,7 +80,7 @@ do
     done
     wait
 
-    for i in {0..1}; do 
+    for i in {0..1}; do
         neighborhood=${neighborhoods[$i]} # Use the neighbourhood from our neighbourhoods array
 
         for batch_size in ${batch_sizes[*]}
@@ -112,5 +112,5 @@ do
             done
         done
     done
-    wait 
+    wait
 done

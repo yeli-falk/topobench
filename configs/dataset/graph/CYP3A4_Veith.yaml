@@ -1,7 +1,7 @@
 # Dataset loader config
 loader:
   _target_: topobench.data.loaders.ADMEDatasetLoader
-  parameters: 
+  parameters:
     data_domain: graph
     data_type: ADME
     data_name: CYP3A4_Veith
@@ -9,7 +9,7 @@ loader:
 
 # Dataset parameters
 parameters:
-  num_features: 
+  num_features:
     - 9  # OGB atom features
     - 3  # OGB edge features
   num_classes: 2

@@ -1,7 +1,7 @@
 # =====================
 # DATA
 # =====================
-DATA_SEEDS=(0 3 5 7 9) 
+DATA_SEEDS=(0 3 5 7 9)
 
 # =====================
 # MODEL PARAMETERS
@@ -39,7 +39,7 @@ PRETRAIN_MODELS_STR=$(IFS=,; echo "${PRETRAIN_MODELS[*]}")  # Convert to comma-s
 batch_sizes=(128 256)
 learning_rates=(0.001)
 neighborhoods=(
-    # adjacency 
+    # adjacency
     "['up_adjacency-0']"
     # incidence
     "['up_adjacency-0','down_incidence-1']"
@@ -51,11 +51,11 @@ for model_type in ${model_types[*]}
 do
     for dataset in ${datasets[*]}
     do
-        
+
         project_name="fix_gnn_rebuttal_cell_${dataset}"
             # =====================
             gpus=(1 2 3 4 5 6 7)
-            for i in {0..1}; do 
+            for i in {0..1}; do
                 CUDA=${gpus[$i]}  # Use the GPU number from our gpus array
                 neighborhood=${neighborhoods[$i]} # Use the neighbourhood from our neighbourhoods array
 
@@ -86,7 +86,7 @@ do
             wait
 
             gpus=(1 2 3 4 5 6 7)
-            for i in {0..1}; do 
+            for i in {0..1}; do
                 CUDA=${gpus[$i]}  # Use the GPU number from our gpus array
                 neighborhood=${neighborhoods[$i]} # Use the neighbourhood from our neighbourhoods array
 

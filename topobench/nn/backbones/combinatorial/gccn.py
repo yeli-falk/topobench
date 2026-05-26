@@ -103,7 +103,7 @@ class TopoTune(torch.nn.Module):
         Parameters
         ----------
         params : dict
-            The parameters of the batch, containting the complex.
+            The parameters of the batch, containing the complex.
         src_rank : int
             The source rank.
         nbhd : str
@@ -159,7 +159,7 @@ class TopoTune(torch.nn.Module):
         Parameters
         ----------
         params : dict
-            The parameters of the batch, containting the complex.
+            The parameters of the batch, containing the complex.
         src_rank : int
             The source rank.
         dst_rank : int
@@ -244,7 +244,9 @@ class TopoTune(torch.nn.Module):
             if dst_rank not in x_out_per_rank:
                 x_out_per_rank[dst_rank] = x_out_per_route[route_index]
             else:
-                x_out_per_rank[dst_rank] = x_out_per_rank[dst_rank] + x_out_per_route[route_index]
+                x_out_per_rank[dst_rank] = (
+                    x_out_per_rank[dst_rank] + x_out_per_route[route_index]
+                )
         return x_out_per_rank
 
     def generate_membership_vectors(self, batch: Data):

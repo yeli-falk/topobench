@@ -28,6 +28,15 @@ class HOPSEFeatureEncoder(AbstractFeatureEncoder):
         List of indexes to apply the BaseEncoders to in terms of hops (default: None).
     batch_norm : bool, optional
         Wether to apply batch normalizaiton when encoding (default: False).
+    use_atom_encoder : bool, optional
+        If True, replace the encoder for dimension 0 / hop 0 with an OGB
+        ``AtomEncoder`` (default: False).
+    use_bond_encoder : bool, optional
+        If True, replace the encoder for dimension 1 / hop 0 with an OGB
+        ``BondEncoder`` (default: False).
+    fuse_pse2cell : bool, optional
+        If True, concatenate and linearly project per-hop PSE encodings back
+        into the cell features after encoding (default: False).
     **kwargs : dict, optional
         Additional keyword arguments.
     """
@@ -140,20 +149,64 @@ class HOPSEFeatureEncoder(AbstractFeatureEncoder):
 
 
 class SimpleAtomEncoder(torch.nn.Module):
+    r"""Thin wrapper around OGB's ``AtomEncoder``.
+
+    Parameters
+    ----------
+    in_channels : int
+        Embedding dimension passed to the underlying ``AtomEncoder``.
+    """
+
     def __init__(self, in_channels):
         super().__init__()
         self.atom_encoder = AtomEncoder(in_channels)
 
     def forward(self, x, batch):
+        r"""Encode integer atom features.
+
+        Parameters
+        ----------
+        x : torch.Tensor
+            Atom feature tensor; will be cast to ``long`` before encoding.
+        batch : torch.Tensor
+            Batch assignment vector (unused, kept for API compatibility).
+
+        Returns
+        -------
+        torch.Tensor
+            Encoded atom features.
+        """
         x = self.atom_encoder(x.long())
         return x
 
 
 class SimpleBondEncoder(torch.nn.Module):
+    r"""Thin wrapper around OGB's ``BondEncoder``.
+
+    Parameters
+    ----------
+    in_channels : int
+        Embedding dimension passed to the underlying ``BondEncoder``.
+    """
+
     def __init__(self, in_channels):
         super().__init__()
         self.bond_encoder = BondEncoder(in_channels)
 
     def forward(self, x, batch):
+        r"""Encode integer bond features.
+
+        Parameters
+        ----------
+        x : torch.Tensor
+            Bond feature tensor; will be cast to ``long`` before encoding.
+        batch : torch.Tensor
+            Batch assignment vector (unused, kept for API compatibility).
+
+        Returns
+        -------
+        torch.Tensor
+            Encoded bond features.
+        """
         x = self.bond_encoder(x.long())
         return x

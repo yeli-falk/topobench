@@ -14,6 +14,9 @@ class RenameFields(torch_geometric.transforms.BaseTransform):
         List of original field names to be renamed.
     new_field_name : list of str
         List of new field names corresponding to `init_field_name`.
+    **kwargs : dict, optional
+        Additional keyword arguments stored on the transform as
+        ``self.parameters``.
     """
 
     def __init__(self, init_field_name, new_field_name, **kwargs):

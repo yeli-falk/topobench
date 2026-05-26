@@ -8,7 +8,7 @@
 #   - HYPERPARAMS: Explicitly loops over search space (no --multirun).
 # ==============================================================================
 
-export SELECTED_GPUS="0,1,2,3,4,5,6,7" 
+export SELECTED_GPUS="0,1,2,3,4,5,6,7"
 wandb_entity="gbg141-hopse"
 RESUME=true  # Set to true to skip already-completed runs
 
@@ -89,14 +89,14 @@ for i in "${!gpus[@]}"; do slot_pids[$i]=0; done
 MISSING_COMBOS=(
     # # --- HOPSE-M-F (cell) ---
     # "cell/hopse_m | graph/CYP3A4_Veith | [up_incidence-0,up_incidence-1,2-up_incidence-0,down_incidence-1,down_incidence-2,2-down_incidence-2] | [HKFE,KHopFE,PPRFE] | "
-    
+
     # # --- HOPSE-M-PE (cell) ---
     # "cell/hopse_m | graph/BBB_Martins | [up_adjacency-0] | [LapPE,RWSE,ElectrostaticPE,HKdiagSE] | "
     # "cell/hopse_m | graph/CYP3A4_Veith | [up_incidence-0,up_incidence-1,2-up_incidence-0,down_incidence-1,down_incidence-2,2-down_incidence-2] | [LapPE,RWSE,ElectrostaticPE,HKdiagSE] | "
-    
+
     # # --- HOPSE-G (cell) ---
     # "cell/hopse_g | graph/CYP3A4_Veith | [up_adjacency-0] | null | transforms.hopse_encoding.pretrain_model=molpcba,zinc"
-    
+
     # --- HOPSE-G (simplicial) ---
     # "simplicial/hopse_g | simplicial/mantra_name | [up_adjacency-0,up_adjacency-1,2-up_adjacency-0,down_adjacency-1,down_adjacency-2,2-down_adjacency-2];[up_incidence-0,2-up_incidence-0];[up_incidence-0,up_incidence-1,2-up_incidence-0,down_incidence-1,down_incidence-2,2-down_incidence-2] | null | transforms.hopse_encoding.pretrain_model=molpcba,zinc"
     # "simplicial/hopse_g | simplicial/mantra_orientation | [up_adjacency-0,up_adjacency-1,2-up_adjacency-0,down_adjacency-1,down_adjacency-2,2-down_adjacency-2];[up_incidence-0,2-up_incidence-0];[up_incidence-0,up_incidence-1,2-up_incidence-0,down_incidence-1,down_incidence-2,2-down_incidence-2] | null | transforms.hopse_encoding.pretrain_model=molpcba,zinc"
@@ -141,7 +141,7 @@ FIXED_ARGS=(
 generate_all_commands() {
     for combo in "${MISSING_COMBOS[@]}"; do
         IFS='|' read -r model_path dataset_path nbhd_list enc_list extra_args <<< "$combo"
-        
+
         # Clean inputs
         model_path=$(echo "$model_path" | xargs)
         dataset_path=$(echo "$dataset_path" | xargs)
@@ -160,7 +160,7 @@ generate_all_commands() {
             for enc in "${ENCS[@]}"; do
                 # Determine project name
                 proj="missing_ablation_${dataset_name}"
-                
+
                 # Nested loops for hyperparameters
                 for L in "${L_vals[@]}"; do
                 for h in "${h_vals[@]}"; do
@@ -169,12 +169,12 @@ generate_all_commands() {
                 for wd in "${wd_vals[@]}"; do
                 for bs in "${bs_vals[@]}"; do
                 for seed in "${SEEDS[@]}"; do
-                    
+
                     # 1. Build Run Name
                     # (Shorten nbhd for name)
                     nbhd_tag=$(echo "$nbhd" | grep -oE "adj[0-9]|inc[0-9]" | head -1)
                     if [ -z "$nbhd_tag" ]; then nbhd_tag="Ncustom"; fi
-                    
+
                     run_name="${model_name}_${dataset_name}_${nbhd_tag}"
                     if [[ "$enc" != "null" ]]; then
                         enc_tag=$(echo "$enc" | grep -oE "pse|fe" | head -1)
@@ -194,7 +194,7 @@ generate_all_commands() {
                         "model.feature_encoder.out_channels=$h"
                         "model.feature_encoder.proj_dropout=$pdro"
                     )
-                    
+
                     # Backbone layer key varies
                     if [[ "$model_path" == *"topotune"* ]]; then
                         args+=("model.backbone.GNN.num_layers=$L")
@@ -212,7 +212,7 @@ generate_all_commands() {
                     if [[ "$model_path" == *"cell/"* && "$dataset_path" == *"graph/"* ]]; then
                         args+=("transforms.graph2cell_lifting.neighborhoods='$nbhd'")
                     fi
-                    
+
                     # Append extra args
                     if [ -n "$extra_args" ]; then
                         read -ra EXTRA_ARRAY <<< "$extra_args"
@@ -227,7 +227,7 @@ generate_all_commands() {
                                     final_name="${run_name}_${v}"
                                     echo "${final_name};python -m topobench ${final_args[*]} logger.wandb.project=$proj +logger.wandb.entity=$wandb_entity +logger.wandb.name=$final_name"
                                 done
-                                continue 2 
+                                continue 2
                             else
                                 args+=("$ex")
                             fi
