@@ -30,18 +30,17 @@ class TBEvaluator(AbstractEvaluator):
         self.task = task
 
         # Define the metrics depending on the task
-        if kwargs["num_classes"] > 1 and self.task == "classification":
-            # Note that even for binary classification, we use multiclass metrics
-            # According to the torchmetrics documentation (https://lightning.ai/docs/torchmetrics/stable/classification/accuracy.html#torchmetrics.classification.MulticlassAccuracy)
-            # This setup should work correctly
-            parameters = {"num_classes": kwargs["num_classes"]}
+        if self.task == "classification":
+            num_classes = kwargs.get("num_classes", 1)
+            parameters = {"num_classes": num_classes}
             parameters["task"] = "multiclass"
             metric_names = kwargs["metrics"]
 
         elif self.task == "multilabel classification":
-            parameters = {"num_classes": kwargs["num_classes"]}
+            num_classes = kwargs.get("num_classes", 1)
+            parameters = {"num_classes": num_classes}
             parameters["task"] = "multilabel"
-            parameters["num_labels"] = kwargs["num_classes"]
+            parameters["num_labels"] = num_classes
             metric_names = kwargs["metrics"]
 
         elif self.task == "multioutput classification":
