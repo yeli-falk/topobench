@@ -1130,3 +1130,64 @@ class TestCombinedFEs:
         assert transformed.KHopFE.shape == (3, 3)
         assert transformed.SheafConnLapPE.shape == (3, 6)
         assert transformed.PPRFE.shape == (3, 5)
+
+
+class TestSelectDestinationFEs:
+    """Test SelectDestinationFEs transform."""
+
+    def setup_method(self):
+        """Set up shared fixtures."""
+        from topobench.transforms.data_manipulations.combined_feature_encodings import SelectDestinationFEs
+        self.cls = SelectDestinationFEs
+        self.edge_index = torch.tensor([[0, 1, 2], [1, 2, 0]])
+
+    def _make_data_with_encodings(self, n_nodes=5):
+        """Build a minimal Data object that carries HKFE and KHopFE attributes."""
+        x = torch.randn(n_nodes, 3)
+        hkfe = torch.randn(n_nodes, 4)
+        khopfe = torch.randn(n_nodes, 2)
+        from torch_geometric.data import Data
+        data = Data(x=x, HKFE=hkfe, KHopFE=khopfe)
+        return data
+
+    def test_forward_slices_to_n_dst(self):
+        """forward() keeps only the first n_dst_nodes rows of each encoding."""
+        transform = self.cls(encodings=["HKFE", "KHopFE"])
+        data = self._make_data_with_encodings(n_nodes=5)
+        n_dst = 3
+
+        out = transform.forward(data, n_dst)
+
+        assert out.x.shape == (3, 3)
+        assert out.HKFE.shape == (3, 4)
+        assert out.KHopFE.shape == (3, 2)
+
+    def test_call_delegates_to_forward(self):
+        """__call__ is equivalent to forward."""
+        transform = self.cls(encodings=["HKFE"])
+        data = self._make_data_with_encodings(n_nodes=4)
+
+        out_call = transform(data, 2)
+        out_fwd = transform.forward(data, 2)
+
+        assert torch.equal(out_call.x, out_fwd.x)
+        assert torch.equal(out_call.HKFE, out_fwd.HKFE)
+
+    def test_missing_encoding_raises_value_error(self):
+        """forward() raises ValueError when a requested encoding is absent."""
+        transform = self.cls(encodings=["HKFE", "MISSING_KEY"])
+        data = self._make_data_with_encodings(n_nodes=4)
+
+        with pytest.raises(ValueError, match="MISSING_KEY"):
+            transform.forward(data, 2)
+
+    def test_none_x_handled(self):
+        """forward() handles data.x = None without crashing."""
+        from torch_geometric.data import Data
+        transform = self.cls(encodings=["HKFE"])
+        data = Data(x=None, HKFE=torch.randn(5, 4))
+
+        out = transform(data, 3)
+
+        assert out.x is None
+        assert out.HKFE.shape == (3, 4)
