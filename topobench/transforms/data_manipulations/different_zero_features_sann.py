@@ -29,7 +29,7 @@ class DifferentZeroFeaturesSANN(torch_geometric.transforms.BaseTransform):
         self.dimensions = kwargs["dimensions"]
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(type={self.type!r},dimensions={list(self.dimensions)} mean={self.mean!r}, std={self.std!r}, feature_vector={self.feature_vector_size!r})"
+        return f"{self.__class__.__name__}(type={self.type!r},dimensions={self.dimensions} mean={self.mean!r}, std={self.std!r}, feature_vector={self.feature_vector_size!r})"
 
     def forward(self, data: torch_geometric.data.Data):
         r"""Apply the transform to the input data.

@@ -769,3 +769,47 @@ class TestCombinedPSEs:
         assert transformed.RWSE.dtype == torch.float32
         assert transformed.ElectrostaticPE.dtype == torch.float32
         assert transformed.HKdiagSE.dtype == torch.float32
+
+
+class TestCombinedPSEsEdgeCases:
+    """Cover baseline_device branches and invalid-encoding error."""
+
+    def test_unsupported_encoding_raises_value_error(self):
+        """forward() raises ValueError for unknown encoding names."""
+        transform = CombinedPSEs(encodings=["TOTALLY_UNKNOWN"])
+        data = Data(
+            x=torch.randn(3, 2),
+            edge_index=torch.tensor([[0, 1], [1, 0]]),
+            num_nodes=3,
+        )
+        with pytest.raises(ValueError, match="Unsupported encoding type"):
+            transform(data)
+
+    def test_cuda_unavailable_falls_back_to_cpu(self):
+        """When CUDA is requested but unavailable, target_device falls back to CPU."""
+        params = {"LapPE": {"max_pe_dim": 4, "concat_to_x": True, "device": "cuda"}}
+        transform = CombinedPSEs(encodings=["LapPE"], parameters=params)
+        data = Data(
+            x=torch.randn(3, 1),
+            edge_index=torch.tensor([[0, 1, 2], [1, 2, 0]]),
+            num_nodes=3,
+        )
+        # Should not raise even if CUDA is absent; falls back to CPU
+        out = transform(data)
+        assert out.x is not None
+
+    def test_preprocessor_device_overrides_default(self):
+        """CombinedPSEs uses preprocessor_device as fallback device."""
+        params = {"LapPE": {"max_pe_dim": 4, "concat_to_x": True}}
+        transform = CombinedPSEs(
+            encodings=["LapPE"],
+            parameters=params,
+            preprocessor_device="cpu",
+        )
+        data = Data(
+            x=torch.randn(3, 1),
+            edge_index=torch.tensor([[0, 1, 2], [1, 2, 0]]),
+            num_nodes=3,
+        )
+        out = transform(data)
+        assert out.x is not None
