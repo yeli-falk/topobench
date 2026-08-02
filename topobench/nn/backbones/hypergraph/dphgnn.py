@@ -1465,8 +1465,8 @@ class DPHGNN(nn.Module):
         if not self.use_spectral:
             x_z = torch.zeros_like(x_z)
 
-        # Experiment-E2 ablation (arm A4 `no_sib`): the lambda -> 0
-        # limit of Eq. 6.2, at the same 2d shape.
+        # Experiment-E2 ablation (arm A4 `no_sib`): the sib_lambda -> 0
+        # limit of the SIB smoothing term (Sec. 3.2), at the same 2d shape.
         if self.use_sib:
             x_spectral = self.sib(x_0, delta_rw, delta_sym, delta_hgnn)
         else:
